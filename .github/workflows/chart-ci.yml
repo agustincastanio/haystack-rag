@@ -49,16 +49,19 @@ jobs:
       # 7. Run unit tests
       - name: Run unit tests
         run: |
+          cd "$CHART_DIR"
           helm unittest tests/unit/
 
       # 8. Run integration tests
       - name: Run integration tests
         run: |
+          cd "$CHART_DIR"
           helm unittest tests/integration/
 
       # 9. Generate test report
       - name: Generate test report
         run: |
+          cd "$CHART_DIR"
           helm unittest --output-type XUnit --output-file test-report.xml .
         continue-on-error: true
 
