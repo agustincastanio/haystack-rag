@@ -6,45 +6,50 @@ on:
   pull_request:
 
 env:
-  CHART_DIR: "."          # Chart is at repo root
+  CHART_DIR: "."          # chart is at repo root
 
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
-      # 1  Checkout repo
+      # 1. Checkout repo
       - uses: actions/checkout@v4
 
-      # 2  Install Helm
+      # 2. Install Helm
       - name: Setup Helm
         uses: azure/setup-helm@v3
         with:
           version: v3.14.3
 
-      # 3  Install kubeconform v0.6.5
+      # 3. Install kubeconform (strict YAML schema validator)
       - name: Install kubeconform
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.5/kubeconform-linux-amd64.tar.gz \
             | sudo tar -xz -C /usr/local/bin kubeconform
-          kubeconform -v
+          kubeconform -v    # log version for troubleshooting
 
-      # 4  Download Traefik CRD schema once
-      - name: Fetch Traefik CRD schema
+      # 4. Download Traefik CRD YAML and split per‑kind
+      - name: Fetch Traefik CRD schemas
         run: |
           mkdir -p /tmp/schemas
           curl -sSL \
             https://raw.githubusercontent.com/traefik/traefik/v2.10/docs/content/reference/dynamic-configuration/kubernetes-crd-v1alpha1.yml \
-            -o /tmp/schemas/traefik-crd.yaml
+            -o /tmp/crd.yaml
+          # Split into 3 files so kubeconform can match by {{ .ResourceKind }}
+          yq -o yaml 'select(.kind == "IngressRoute")' /tmp/crd.yaml > /tmp/schemas/IngressRoute.yaml
+          yq -o yaml 'select(.kind == "Middleware")'   /tmp/crd.yaml > /tmp/schemas/Middleware.yaml
+          yq -o yaml 'select(.kind == "ServersTransport")' /tmp/crd.yaml > /tmp/schemas/ServersTransport.yaml
 
-      # 5  Strict Helm lint
+      # 5. Helm strict lint
       - name: Helm strict lint
         run: |
           helm lint --strict "$CHART_DIR" -f "$CHART_DIR/values.yaml"
 
-      # 6  Render & schema‑validate (core + Traefik CRDs)
+      # 6. Render chart & validate (core + Traefik CRDs)
       - name: Render & kubeconform
         run: |
           helm template "$CHART_DIR" | \
             kubeconform -strict -summary \
               -schema-location default \
-              -schema-location file:///tmp/schemas/traefik-crd.yaml
+              -schema-location 'file:///tmp/schemas/{{ .ResourceKind }}.yaml'
