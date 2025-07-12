@@ -6,56 +6,58 @@ on:
   pull_request:
 
 env:
-  CHART_DIR: "."            # chart lives at repo root
+  # The chart (Chart.yaml + values.yaml) is at the repo root
+  CHART_DIR: "."
 
 jobs:
   lint:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repo
+      # 1  Checkout repository
       - uses: actions/checkout@v4
 
-      # 2. Install Helm 3
+      # 2  Install Helm 3
       - name: Setup Helm
         uses: azure/setup-helm@v3
         with:
           version: v3.14.3
 
-      # 3. Install kubeconform
+      # 3  Install kubeconform (strict Kubernetes schema validator)
       - name: Install kubeconform
         run: |
-          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.5/kubeconform-linux-amd64.tar.gz \
+          curl -sSL \
+            https://github.com/yannh/kubeconform/releases/download/v0.6.5/kubeconform-linux-amd64.tar.gz \
             | sudo tar -xz -C /usr/local/bin kubeconform
-          kubeconform -v
+          kubeconform -v    # log the version
 
-      # 4. Install yq (YAML CLI) to split CRD file
+      # 4  Install yq (YAML CLI) to split Traefik CRD file
       - name: Install yq
         run: |
-          curl -sSL https://github.com/mikefarah/yq/releases/download/v4.44.0/yq_linux_amd64 \
-            -o yq && chmod +x yq
-          sudo mv yq /usr/local/bin/
+          sudo curl -sSL \
+            https://github.com/mikefarah/yq/releases/download/v4.44.0/yq_linux_amd64 \
+            -o /usr/local/bin/yq
+          sudo chmod +x /usr/local/bin/yq
           yq --version
 
-      # 5. Download Traefik CRDs and split per‑kind
+      # 5  Download Traefik CRDs and create one schema file per kind
       - name: Fetch Traefik CRD schemas
         run: |
           mkdir -p /tmp/schemas
-          curl -sSL \
-            https://raw.githubusercontent.com/traefik/traefik/v2.10/docs/content/reference/dynamic-configuration/kubernetes-crd-v1alpha1.yml \
-            -o /tmp/traefik-crd-all.yaml
+          CRD_URL="https://raw.githubusercontent.com/traefik/traefik/v2.10/docs/content/reference/dynamic-configuration/kubernetes-crd-v1alpha1.yml"
+          curl -sSL "$CRD_URL" -o /tmp/traefik-crd-all.yaml
           for KIND in IngressRoute Middleware ServersTransport; do
             yq 'select(.kind == strenv(KIND))' /tmp/traefik-crd-all.yaml \
               > /tmp/schemas/${KIND}.yaml
           done
-          ls -l /tmp/schemas          # show for debugging
+          ls -1 /tmp/schemas   # show generated schema files
 
-      # 6. Helm strict lint
+      # 6  Helm strict lint
       - name: Helm strict lint
         run: |
           helm lint --strict "$CHART_DIR" -f "$CHART_DIR/values.yaml"
 
-      # 7. Render chart & validate every resource (core + Traefik CRDs)
+      # 7  Render chart and validate against all schemas (core + Traefik CRDs)
       - name: Render & kubeconform
         run: |
           helm template "$CHART_DIR" | \
