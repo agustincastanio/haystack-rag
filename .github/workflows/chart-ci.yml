@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  CHART_DIR: charts/haystack-rag
+  CHART_DIR: "."                 # chart lives at repo root
 
 jobs:
   lint:
