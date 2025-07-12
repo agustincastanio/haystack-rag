@@ -6,7 +6,7 @@ on:
   pull_request:
 
 env:
-  CHART_DIR: "."          # chart is at repo root
+  CHART_DIR: "."            # chart lives at repo root
 
 jobs:
   lint:
@@ -16,37 +16,46 @@ jobs:
       # 1. Checkout repo
       - uses: actions/checkout@v4
 
-      # 2. Install Helm
+      # 2. Install Helm 3
       - name: Setup Helm
         uses: azure/setup-helm@v3
         with:
           version: v3.14.3
 
-      # 3. Install kubeconform (strict YAML schema validator)
+      # 3. Install kubeconform
       - name: Install kubeconform
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.5/kubeconform-linux-amd64.tar.gz \
             | sudo tar -xz -C /usr/local/bin kubeconform
-          kubeconform -v    # log version for troubleshooting
+          kubeconform -v
 
-      # 4. Download Traefik CRD YAML and split per‑kind
+      # 4. Install yq (YAML CLI) to split CRD file
+      - name: Install yq
+        run: |
+          curl -sSL https://github.com/mikefarah/yq/releases/download/v4.44.0/yq_linux_amd64 \
+            -o yq && chmod +x yq
+          sudo mv yq /usr/local/bin/
+          yq --version
+
+      # 5. Download Traefik CRDs and split per‑kind
       - name: Fetch Traefik CRD schemas
         run: |
           mkdir -p /tmp/schemas
           curl -sSL \
             https://raw.githubusercontent.com/traefik/traefik/v2.10/docs/content/reference/dynamic-configuration/kubernetes-crd-v1alpha1.yml \
-            -o /tmp/crd.yaml
-          # Split into 3 files so kubeconform can match by {{ .ResourceKind }}
-          yq -o yaml 'select(.kind == "IngressRoute")' /tmp/crd.yaml > /tmp/schemas/IngressRoute.yaml
-          yq -o yaml 'select(.kind == "Middleware")'   /tmp/crd.yaml > /tmp/schemas/Middleware.yaml
-          yq -o yaml 'select(.kind == "ServersTransport")' /tmp/crd.yaml > /tmp/schemas/ServersTransport.yaml
+            -o /tmp/traefik-crd-all.yaml
+          for KIND in IngressRoute Middleware ServersTransport; do
+            yq 'select(.kind == strenv(KIND))' /tmp/traefik-crd-all.yaml \
+              > /tmp/schemas/${KIND}.yaml
+          done
+          ls -l /tmp/schemas          # show for debugging
 
-      # 5. Helm strict lint
+      # 6. Helm strict lint
       - name: Helm strict lint
         run: |
           helm lint --strict "$CHART_DIR" -f "$CHART_DIR/values.yaml"
 
-      # 6. Render chart & validate (core + Traefik CRDs)
+      # 7. Render chart & validate every resource (core + Traefik CRDs)
       - name: Render & kubeconform
         run: |
           helm template "$CHART_DIR" | \
