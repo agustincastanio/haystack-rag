@@ -1,4 +1,3 @@
-.github/workflows/helm-lint.yml
 ---
 name: Helm chart lint & schema check
 
