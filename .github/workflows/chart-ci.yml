@@ -1,10 +1,9 @@
----
 name: Helm chart lint & schema check
 
 on:
-  pull_request:
   push:
     branches: [ main ]
+  pull_request:
 
 env:
   CHART_DIR: "."                 # chart lives at repo root
@@ -12,24 +11,44 @@ env:
 jobs:
   lint:
     runs-on: ubuntu-latest
+
     steps:
+      # 1. Checkout code
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Helm 3
+      # 2. Install Helm 3.x
+      - name: Setup Helm
         uses: azure/setup-helm@v3
         with:
           version: v3.14.3
 
-      - name: Install kubeconform (schema validator)
+      # 3. Install kubeconform (schema validator)
+      - name: Install kubeconform
         run: |
-          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.5/kubeconform-linux-amd64.tar.gz | \
-            sudo tar -xz -C /usr/local/bin kubeconform
+          curl -sSL \
+            https://github.com/yannh/kubeconform/releases/download/v0.6.5/kubeconform-linux_amd64.tar.gz \
+            | tar xz
+          sudo mv kubeconform /usr/local/bin/
 
+      # 4. Download Traefik CRD schemas and create per‑kind files
+      - name: Fetch Traefik CRD schemas
+        run: |
+          mkdir -p /tmp/schemas
+          CRD_URL=https://raw.githubusercontent.com/traefik/traefik/v2.10/docs/content/reference/dynamic-configuration/kubernetes-crd-v1alpha1.yml
+          curl -sSL $CRD_URL -o /tmp/schemas/IngressRoute.yaml
+          cp /tmp/schemas/IngressRoute.yaml /tmp/schemas/Middleware.yaml
+          cp /tmp/schemas/IngressRoute.yaml /tmp/schemas/ServersTransport.yaml
+
+      # 5. Helm strict lint
       - name: Helm strict lint
         run: |
-          helm lint --strict "./$CHART_DIR" -f "./$CHART_DIR/values.yaml"
+          helm lint --strict "$CHART_DIR" -f "$CHART_DIR/values.yaml"
 
-      - name: Render chart → kubeconform
+      # 6. Render chart and schema‑validate (includes Traefik CRDs)
+      - name: Render & kubeconform
         run: |
-          helm template "./$CHART_DIR" | kubeconform -strict -summary
+          helm template "$CHART_DIR" | \
+            kubeconform -strict -summary \
+              -schema-location default \
+              -schema-location file:///tmp/schemas/{{ .ResourceKind }}.yaml
