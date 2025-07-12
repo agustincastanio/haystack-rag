@@ -7,7 +7,7 @@ on:
     branches: [ main ]
 
 env:
-  CHART_DIR: haystack-rag   # relative path to the chart root
+  CHART_DIR: charts/haystack-rag
 
 jobs:
   lint:
