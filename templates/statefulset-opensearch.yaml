@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: opensearch
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: opensearch
+    {{- include "haystack.labels" . | nindent 4 }}
+spec:
+  serviceName: opensearch
+  replicas: {{ .Values.opensearch.replicaCount }}
+  selector:
+    matchLabels: { app: opensearch }
+  template:
+    metadata:
+      labels: { app: opensearch }
+    spec:
+      containers:
+      - name: opensearch
+        image: opensearchproject/opensearch:2.18.0
+        env:
+        - name: discovery.type
+          value: single-node
+        - name: bootstrap.memory_lock
+          value: "true"
+        - name: OPENSEARCH_JAVA_OPTS
+          value: {{ .Values.opensearch.javaOpts | quote }}
+        - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: rag-secrets
+              key: OPENSEARCH_PASSWORD
+        ports:
+        - name: http
+          containerPort: 9200
+        volumeMounts:
+        - name: data
+          mountPath: /usr/share/opensearch/data
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: opensearch-data

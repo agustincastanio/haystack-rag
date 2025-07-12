@@ -1,0 +1,19 @@
+# Global
+namespace: haystack-rag
+hostname: rag.local
+
+image:
+  registry: public.ecr.aws/e8b9x6t1
+  tag: 0.1.0
+
+secret:
+  opensearchPassword: ChangeMe123!
+  openaiApiKey: ""
+
+opensearch:
+  replicaCount: 1
+  storageClass: local-path
+  storageSize: 10Gi
+  javaOpts: "-Xms512m -Xmx512m"
+
+resources: {}

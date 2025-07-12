@@ -1,0 +1,30 @@
+# .github/workflows/chart-ci.yml
+name: Helm chart lint & schema check
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.14.3
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.5/kubeconform-linux-amd64.tar.gz \
+            | tar xz
+          sudo mv kubeconform /usr/local/bin/
+
+      - name: Helm strict lint
+        run: helm lint --strict ./haystack-rag -f ./haystack-rag/values.yaml
+
+      - name: Render & schema-validate with kubeconform
+        run: helm template ./haystack-rag | kubeconform -strict

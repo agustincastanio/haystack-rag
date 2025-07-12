@@ -1,0 +1,15 @@
+# ── Helm build artifacts ─────────────────────────────────────────
+*.tgz                # chart archives created by `helm package`
+charts/              # sub‑chart vendor dir (if you run `helm dependency update`)
+
+# ── Local overrides & secrets ────────────────────────────────────
+# Personal values files (never commit secrets or host‑specific settings)
+my-values.yaml
+*.override.yaml
+*.secrets.yaml
+
+# ── Editor / OS noise ────────────────────────────────────────────
+.DS_Store
+.idea/
+.vscode/
+*.swp

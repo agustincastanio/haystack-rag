@@ -1,0 +1,6 @@
+apiVersion: v2
+name: haystack-rag
+version: 0.1.0
+description: "Haystack RAG demo (OpenSearch + indexing & query APIs + React UI)"
+type: application
+appVersion: "{{ .Values.image.tag }}"

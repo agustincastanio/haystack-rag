@@ -1,0 +1,33 @@
+# templates/deployment-query.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-query
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: rag-query
+    {{- include "haystack.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-query
+  template:
+    metadata:
+      labels:
+        app: rag-query
+    spec:
+      containers:
+      - name: app
+        image: {{ .Values.image.registry }}/haystack-query:{{ .Values.image.tag }}
+        envFrom:
+        - configMapRef: { name: rag-config }
+        - secretRef  : { name: rag-secrets }
+        ports:
+        - containerPort: 8002
+        volumeMounts:
+        - name: filestore
+          mountPath: /app/files
+      volumes:
+      - name: filestore
+        emptyDir: {}

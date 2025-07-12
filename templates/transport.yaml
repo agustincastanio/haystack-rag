@@ -1,0 +1,12 @@
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: timeouts
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "haystack.labels" . | nindent 4 }}
+spec:
+  forwardingTimeouts:
+    dialTimeout: 300s
+    responseHeaderTimeout: 600s
+    idleConnTimeout: 600s

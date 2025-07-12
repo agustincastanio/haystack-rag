@@ -1,0 +1,28 @@
+# templates/deployment-frontend.yaml (unchanged since last fix)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-frontend
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: rag-frontend
+    {{- include "haystack.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-frontend
+  template:
+    metadata:
+      labels:
+        app: rag-frontend
+    spec:
+      containers:
+      - name: app
+        image: {{ .Values.image.registry }}/haystack-frontend:{{ .Values.image.tag }}
+        args: ["nginx", "-g", "daemon off;"]
+        env:
+        - name: REACT_APP_HAYSTACK_API_URL
+          value: "/api"
+        ports:
+        - containerPort: 80

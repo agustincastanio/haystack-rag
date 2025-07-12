@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rag-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "haystack.labels" . | nindent 4 }}
+data:
+  OPENSEARCH_HOST: "https://opensearch:9200"
+  OPENSEARCH_USER: "admin"
+  GENERATOR: "openai"
+  USE_OPENAI_EMBEDDER: "false"
+  INDEX_ON_STARTUP: "true"
+  PIPELINES_FROM_YAML: "false"
+  LOG_LEVEL: "INFO"
+  HAYSTACK_LOG_LEVEL: "INFO"

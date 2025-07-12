@@ -1,0 +1,33 @@
+# templates/deployment-indexing.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-indexing
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: rag-indexing
+    {{- include "haystack.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-indexing
+  template:
+    metadata:
+      labels:
+        app: rag-indexing
+    spec:
+      containers:
+      - name: app
+        image: {{ .Values.image.registry }}/haystack-indexing:{{ .Values.image.tag }}
+        envFrom:
+        - configMapRef: { name: rag-config }
+        - secretRef  : { name: rag-secrets }
+        ports:
+        - containerPort: 8001
+        volumeMounts:
+        - name: filestore
+          mountPath: /app/files
+      volumes:
+      - name: filestore
+        emptyDir: {}
