@@ -1,0 +1,7 @@
+# helm-unittest configuration
+helmBinary: helm
+failfast: true
+outputType: XUnit
+outputFile: test-report.xml
+color: true
+verbose: true 

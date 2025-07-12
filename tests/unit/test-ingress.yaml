@@ -1,0 +1,91 @@
+suite: Test Ingress and Middleware
+templates:
+  - ingressroute.yaml
+  - middleware.yaml
+  - middleware-strip.yaml
+  - transport.yaml
+
+tests:
+  - it: should render IngressRoute with correct configuration
+    template: ingressroute.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          apiVersion: traefik.containo.us/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: rag-ingress
+            namespace: haystack-rag
+          spec:
+            entryPoints:
+              - web
+            routes:
+              - match: Host(`rag.local`)
+                kind: Rule
+                services:
+                  - name: rag-frontend
+                    port: 80
+              - match: Host(`rag.local`) && PathPrefix(`/api`)
+                kind: Rule
+                services:
+                  - name: rag-query
+                    port: 8000
+                middlewares:
+                  - name: strip-api-prefix
+
+  - it: should render middleware with correct configuration
+    template: middleware.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          apiVersion: traefik.containo.us/v1alpha1
+          kind: Middleware
+          metadata:
+            name: rag-middleware
+            namespace: haystack-rag
+          spec:
+            headers:
+              customRequestHeaders:
+                X-Forwarded-Proto: https
+
+  - it: should render strip middleware with correct configuration
+    template: middleware-strip.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          apiVersion: traefik.containo.us/v1alpha1
+          kind: Middleware
+          metadata:
+            name: strip-api-prefix
+            namespace: haystack-rag
+          spec:
+            stripPrefix:
+              prefixes:
+                - /api
+
+  - it: should render transport configuration
+    template: transport.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          apiVersion: traefik.containo.us/v1alpha1
+          kind: ServersTransport
+          metadata:
+            name: rag-transport
+            namespace: haystack-rag
+          spec:
+            insecureSkipVerify: true
+
+  - it: should use custom hostname when provided
+    template: ingressroute.yaml
+    set:
+      hostname: custom.example.com
+    asserts:
+      - contains:
+          spec:
+            routes:
+              - match: Host(`custom.example.com`) 

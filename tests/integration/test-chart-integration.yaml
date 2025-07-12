@@ -1,0 +1,181 @@
+suite: Test Chart Integration
+templates:
+  - namespace.yaml
+  - secret.yaml
+  - configmap.yaml
+  - pvc-opensearch.yaml
+  - statefulset-opensearch.yaml
+  - deployment-frontend.yaml
+  - deployment-indexing.yaml
+  - deployment-query.yaml
+  - service.yaml
+  - ingressroute.yaml
+  - middleware.yaml
+  - middleware-strip.yaml
+  - transport.yaml
+
+tests:
+  - it: should render all components with default values
+    asserts:
+      - hasDocuments:
+          count: 13  # namespace + secret + configmap + pvc + statefulset + 3 deployments + 4 services + 3 traefik resources
+      - contains:
+          kind: Namespace
+          metadata:
+            name: haystack-rag
+      - contains:
+          kind: Secret
+          metadata:
+            name: rag-secrets
+      - contains:
+          kind: ConfigMap
+          metadata:
+            name: rag-config
+      - contains:
+          kind: PersistentVolumeClaim
+          metadata:
+            name: opensearch-data
+      - contains:
+          kind: StatefulSet
+          metadata:
+            name: opensearch
+      - contains:
+          kind: Deployment
+          metadata:
+            name: rag-frontend
+      - contains:
+          kind: Deployment
+          metadata:
+            name: rag-indexing
+      - contains:
+          kind: Deployment
+          metadata:
+            name: rag-query
+      - contains:
+          kind: Service
+          metadata:
+            name: opensearch
+      - contains:
+          kind: Service
+          metadata:
+            name: rag-frontend
+      - contains:
+          kind: Service
+          metadata:
+            name: rag-indexing
+      - contains:
+          kind: Service
+          metadata:
+            name: rag-query
+      - contains:
+          kind: IngressRoute
+          metadata:
+            name: rag-ingress
+      - contains:
+          kind: Middleware
+          metadata:
+            name: rag-middleware
+      - contains:
+          kind: Middleware
+          metadata:
+            name: strip-api-prefix
+      - contains:
+          kind: ServersTransport
+          metadata:
+            name: rag-transport
+
+  - it: should use consistent namespace across all resources
+    asserts:
+      - matchSnapshot: {}
+      - contains:
+          metadata:
+            namespace: haystack-rag
+
+  - it: should render with custom values
+    set:
+      namespace: test-namespace
+      hostname: test.example.com
+      image.registry: test.registry.com
+      image.tag: test-tag
+      opensearch.replicaCount: 2
+      opensearch.storageSize: 20Gi
+    asserts:
+      - contains:
+          metadata:
+            namespace: test-namespace
+      - contains:
+          spec:
+            routes:
+              - match: Host(`test.example.com`)
+      - contains:
+          spec:
+            template:
+              spec:
+                containers:
+                  - image: test.registry.com/haystack-frontend:test-tag
+      - contains:
+          spec:
+            replicas: 2
+      - contains:
+          spec:
+            resources:
+              requests:
+                storage: 20Gi
+
+  - it: should have correct service selectors
+    asserts:
+      - contains:
+          kind: Service
+          metadata:
+            name: opensearch
+          spec:
+            selector:
+              app: opensearch
+      - contains:
+          kind: Service
+          metadata:
+            name: rag-frontend
+          spec:
+            selector:
+              app: rag-frontend
+      - contains:
+          kind: Service
+          metadata:
+            name: rag-indexing
+          spec:
+            selector:
+              app: rag-indexing
+      - contains:
+          kind: Service
+          metadata:
+            name: rag-query
+          spec:
+            selector:
+              app: rag-query
+
+  - it: should have correct deployment selectors
+    asserts:
+      - contains:
+          kind: Deployment
+          metadata:
+            name: rag-frontend
+          spec:
+            selector:
+              matchLabels:
+                app: rag-frontend
+      - contains:
+          kind: Deployment
+          metadata:
+            name: rag-indexing
+          spec:
+            selector:
+              matchLabels:
+                app: rag-indexing
+      - contains:
+          kind: Deployment
+          metadata:
+            name: rag-query
+          spec:
+            selector:
+              matchLabels:
+                app: rag-query 

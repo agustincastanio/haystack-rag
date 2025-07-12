@@ -40,3 +40,32 @@ jobs:
           helm template "$CHART_DIR" | \
             kubeconform -strict -summary \
               -skip IngressRoute,Middleware,ServersTransport
+
+      # 6. Install helm-unittest plugin
+      - name: Install helm-unittest
+        run: |
+          helm plugin install https://github.com/quintush/helm-unittest
+
+      # 7. Run unit tests
+      - name: Run unit tests
+        run: |
+          helm unittest tests/unit/
+
+      # 8. Run integration tests
+      - name: Run integration tests
+        run: |
+          helm unittest tests/integration/
+
+      # 9. Generate test report
+      - name: Generate test report
+        run: |
+          helm unittest --output-type XUnit --output-file test-report.xml .
+        continue-on-error: true
+
+      # 10. Upload test results
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: test-report.xml
