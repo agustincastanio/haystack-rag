@@ -1,0 +1,68 @@
+{{- /*
+NOTES.txt for haystack-rag Helm chart
+*/ -}}
+
+Thank you for installing the Haystack RAG chart! 🎉
+
+---------------------------------------------------------
+🚀 Application Endpoints
+---------------------------------------------------------
+
+UI:      http://{{ .Values.hostname }}{{- if .Values.frontend.port }}:{{ .Values.frontend.port }}{{ end }}/
+API:     http://{{ .Values.hostname }}/api/
+
+If you are running locally and not using a real DNS, add this to your /etc/hosts:
+  127.0.0.1 {{ .Values.hostname }}
+
+---------------------------------------------------------
+🔒 Credentials
+---------------------------------------------------------
+
+OpenSearch admin user:     admin
+OpenSearch admin password: {{ .Values.secret.opensearchPassword }}
+
+OpenAI API key:            {{ if .Values.secret.openaiApiKey }}(set){{ else }}(not set){{ end }}
+
+---------------------------------------------------------
+🔎 Health Checks
+---------------------------------------------------------
+
+Check pod status:
+  kubectl get pods -n {{ .Values.namespace }}
+
+Check service endpoints:
+  kubectl get svc -n {{ .Values.namespace }}
+
+Check logs:
+  kubectl logs deployment/rag-query -n {{ .Values.namespace }}
+  kubectl logs deployment/rag-indexing -n {{ .Values.namespace }}
+  kubectl logs deployment/rag-frontend -n {{ .Values.namespace }}
+  kubectl logs statefulset/opensearch -n {{ .Values.namespace }}
+
+---------------------------------------------------------
+🔗 Port Forwarding (if not using ingress)
+---------------------------------------------------------
+
+# UI
+kubectl port-forward svc/rag-frontend {{ .Values.frontend.port }}:{{ .Values.frontend.port }} -n {{ .Values.namespace }}
+
+# Query API
+kubectl port-forward svc/rag-query {{ .Values.query.port }}:{{ .Values.query.port }} -n {{ .Values.namespace }}
+
+# Indexing API
+kubectl port-forward svc/rag-indexing {{ .Values.indexing.port }}:{{ .Values.indexing.port }} -n {{ .Values.namespace }}
+
+# OpenSearch
+kubectl port-forward svc/opensearch 9200:9200 -n {{ .Values.namespace }}
+
+---------------------------------------------------------
+🛠️ Troubleshooting
+---------------------------------------------------------
+
+- Ensure all pods are running: kubectl get pods -n {{ .Values.namespace }}
+- Check for CrashLoopBackOff or errors in logs
+- Verify secrets and configmaps are mounted: kubectl describe pod <pod-name> -n {{ .Values.namespace }}
+- Confirm ingress or port-forwarding is set up correctly
+
+---------------------------------------------------------
+For more information, see the README and tests/README.md. 

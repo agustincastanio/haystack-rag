@@ -58,7 +58,27 @@ haystack-rag/
 
 ## Testing
 
-See [`tests/README.md`](./tests/README.md) for comprehensive documentation on the Python-based testing framework, how to run tests locally, and CI integration details.
+The test suite validates:
+- All values from values.yaml are respected in the rendered manifests
+- Custom values (e.g., replicaCount, resources, env, health checks, ingress) are correctly applied
+- Health check and log level configuration is present in deployments
+- Ingress and service settings are parameterized
+
+**Sample test case:**
+
+```python
+# In tests/run-tests.py
+
+def test_frontend_replica_count(self) -> TestResult:
+    """Test that frontend replicaCount is set from values.yaml"""
+    print("🧪 Testing frontend replica count...")
+    if f"replicas: {self.values['frontend']['replicaCount']}" in self.rendered_yaml:
+        return TestResult("Frontend Replica Count", True, "frontend replicaCount is set correctly")
+    else:
+        return TestResult("Frontend Replica Count", False, "frontend replicaCount is not set correctly")
+```
+
+See [`tests/README.md`](./tests/README.md) for full test coverage and instructions.
 
 ---
 
@@ -72,8 +92,7 @@ See [`IMAGES.md`](./IMAGES.md) for instructions on how to build and push the req
 
 ```bash
 # clone the repo that contains the chart directory
-# git clone https://github.com/your‑fork/haystack‑rag‑app.git
-cd haystack‑rag‑app/charts/haystack-rag
+cd haystack-rag
 
 # create secrets override
 auth_file=my-values.yaml
@@ -151,16 +170,127 @@ kubectl logs statefulset/opensearch -n haystack-rag
 
 ---
 
-## Values reference (excerpt)
+## Values reference
 
-| Key | Default | Description |
-|-----|---------|-------------|
-| `hostname`              | `rag.local` | Ingress host header |
-| `image.registry`        | `public.ecr.aws/e8b9x6t1` | change if you push to private ECR |
-| `image.tag`             | `0.1.0`     | set to your build tag |
-| `secret.*`              | *empty*     | OpenSearch admin pwd & OpenAI key |
-| `opensearch.storageSize`| `10Gi`      | PVC size |
-| `resources.*`           | `{}`        | add CPU/RAM requests/limits |
+The chart is fully parameterized and all major settings are grouped by component. Below is a summary of the most important values (see values.yaml for all options):
+
+```yaml
+namespace: haystack-rag
+hostname: rag.local
+
+secret:
+  opensearchPassword: ChangeMe123!
+  openaiApiKey: ""
+
+frontend:
+  replicaCount: 1
+  port: 80
+  service:
+    type: ClusterIP
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  env:
+    REACT_APP_HAYSTACK_API_URL: /api
+    LOG_LEVEL: info
+  livenessProbe:
+    path: /
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  readinessProbe:
+    path: /
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+query:
+  replicaCount: 1
+  port: 8002
+  service:
+    type: ClusterIP
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    LOG_LEVEL: info
+  livenessProbe:
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  readinessProbe:
+    path: /health
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+indexing:
+  replicaCount: 1
+  port: 8001
+  service:
+    type: ClusterIP
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+  env:
+    LOG_LEVEL: info
+  livenessProbe:
+    path: /health
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  readinessProbe:
+    path: /health
+    initialDelaySeconds: 5
+    periodSeconds: 5
+
+opensearch:
+  replicaCount: 1
+  port: 9200
+  service:
+    type: ClusterIP
+  storageClass: local-path
+  storageSize: 10Gi
+  javaOpts: "-Xms512m -Xmx512m"
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1
+      memory: 2Gi
+
+ingress:
+  enabled: true
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: haystack-rag-strip-api@kubernetescrd,haystack-rag-buffering@kubernetescrd
+  buffering:
+    enabled: true
+    maxRequestBodyBytes: 104857600
+    memRequestBodyBytes: 10485760
+  timeouts:
+    readTimeout: 600
+    writeTimeout: 600
+    idleTimeout: 600
+```
+
+**Key variables:**
+- `replicaCount`: Number of pod replicas for each component
+- `port`: Service and container port for each component
+- `resources`: CPU/memory requests and limits
+- `env`: Environment variables (e.g., log level, API URL)
+- `livenessProbe`/`readinessProbe`: Health check paths and timings
+- `service.type`: Kubernetes service type (ClusterIP, NodePort, etc.)
+- `ingress.buffering`/`ingress.timeouts`: Traefik middleware settings
 
 ---
 
@@ -171,7 +301,7 @@ kubectl logs statefulset/opensearch -n haystack-rag
 |`NameResolutionError: 'opensearch'`| Service missing / mis‑named | `kubectl -n haystack-rag get svc opensearch` |
 |Uploads >10 MiB return 413| buffering middleware not attached | check `ingressroute.yaml` annotation & route middlwares |
 |`/files` 200 but `/search` 404| `/api` prefix not stripped | ensure `strip-api` middleware is on both API routes |
-|Frontend loads but calls `http://localhost:8000/files`| **`REACT_APP_HAYSTACK_API_URL`** was baked incorrectly at **build time** → rebuild frontend image with `--build-arg REACT_APP_HAYSTACK_API_URL=/api` |
+|Frontend loads but calls `http://localhost:8000/files`| **`REACT_APP_HAYSTACK_API_URL`** was baked incorrectly at **build time** | rebuild frontend image with `--build-arg REACT_APP_HAYSTACK_API_URL=/api` |
 
 ---
 
