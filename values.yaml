@@ -23,12 +23,16 @@ frontend:
     LOG_LEVEL: info
   livenessProbe:
     path: /
-    initialDelaySeconds: 10
+    initialDelaySeconds: 60
     periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 5
   readinessProbe:
     path: /
-    initialDelaySeconds: 5
-    periodSeconds: 5
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 5
 
 query:
   replicaCount: 1
@@ -48,12 +52,16 @@ query:
     LOG_LEVEL: info
   livenessProbe:
     path: /health
-    initialDelaySeconds: 10
+    initialDelaySeconds: 60
     periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 18
   readinessProbe:
     path: /health
-    initialDelaySeconds: 5
-    periodSeconds: 5
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 18
 
 indexing:
   replicaCount: 1
@@ -73,12 +81,16 @@ indexing:
     LOG_LEVEL: info
   livenessProbe:
     path: /health
-    initialDelaySeconds: 10
+    initialDelaySeconds: 60
     periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 18
   readinessProbe:
     path: /health
-    initialDelaySeconds: 5
-    periodSeconds: 5
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 18
 
 opensearch:
   replicaCount: 1
