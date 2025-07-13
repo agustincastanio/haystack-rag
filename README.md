@@ -29,6 +29,14 @@ haystack-rag/
 ├── values.yaml              # all tunables
 ├── README.md                # ← this file
 ├── IMAGES.md                # how to rebuild & push images to ECR
+├── .github/
+│   └── workflows/
+│       └── chart-ci.yml     # CI/CD testing workflow
+├── tests/
+│   ├── README.md            # comprehensive testing documentation
+│   ├── run-tests.py         # main testing framework
+│   ├── generate-report.py   # XUnit report generator
+│   └── test-values.yaml     # test configuration values
 └── templates/
     ├── _helpers.tpl         # name helpers & labels
     ├── namespace.yaml
@@ -40,11 +48,23 @@ haystack-rag/
     ├── deployment-query.yaml
     ├── deployment-frontend.yaml
     ├── service.yaml         # four Services (OpenSearch, indexing, query, UI)
-    ├── middleware.yaml      # 100 MiB body limit
+    ├── middleware.yaml      # 100 MiB body limit
     ├── middleware-strip.yaml# strips /api for worker pods
     ├── transport.yaml       # extended proxy time‑outs
     └── ingressroute.yaml    # Traefik routing
 ```
+
+---
+
+## Testing
+
+See [`tests/README.md`](./tests/README.md) for comprehensive documentation on the Python-based testing framework, how to run tests locally, and CI integration details.
+
+---
+
+## Building Images
+
+See [`IMAGES.md`](./IMAGES.md) for instructions on how to build and push the required container images for Kubernetes deployments.
 
 ---
 
