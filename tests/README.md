@@ -33,11 +33,34 @@ The framework tests:
 - Service selectors and port configurations (OpenSearch: 9200, Frontend: 80, Query: 8002, Indexing: 8001)
 - Image references and versions
 - Environment variable configuration
+- **All values from values.yaml are respected in the rendered manifests**
+- **Custom values (e.g., replicaCount, resources, env, health checks, ingress) are correctly applied**
+- **Health check and log level configuration is present in deployments**
+- **Ingress and service settings are parameterized**
 
 #### ✅ Integration Testing
 - End-to-end chart functionality
 - Custom values processing
 - Template variable substitution
+
+## Example Test Cases
+
+- **Test that frontend, query, and indexing deployments use the correct replica count and resource settings from values.yaml**
+- **Test that liveness and readiness probes are set as configured**
+- **Test that log level and custom environment variables are respected**
+- **Test that ingress buffering and timeouts are set as configured**
+
+```python
+# Example: Test that frontend replicaCount is set from values.yaml
+
+def test_frontend_replica_count(self) -> TestResult:
+    """Test that frontend replicaCount is set from values.yaml"""
+    print("🧪 Testing frontend replica count...")
+    if f"replicas: {self.values['frontend']['replicaCount']}" in self.rendered_yaml:
+        return TestResult("Frontend Replica Count", True, "frontend replicaCount is set correctly")
+    else:
+        return TestResult("Frontend Replica Count", False, "frontend replicaCount is not set correctly")
+```
 
 ## Running Tests
 
@@ -128,6 +151,7 @@ tests = [
 - Tests all critical chart functionality
 - Validates both default and custom configurations
 - Checks resource relationships and dependencies
+- **Covers all parameterized values and custom overrides**
 
 ### ✅ Maintainability
 - Simple Python codebase

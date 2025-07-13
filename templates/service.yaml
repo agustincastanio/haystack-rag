@@ -8,11 +8,12 @@ metadata:
     app: opensearch
     {{- include "haystack.labels" . | nindent 4 }}
 spec:
+  type: {{ .Values.opensearch.service.type }}
   clusterIP: None            # headless; drop this line for normal ClusterIP
   ports:
     - name: http
-      port: 9200
-      targetPort: 9200
+      port: {{ .Values.opensearch.port }}
+      targetPort: {{ .Values.opensearch.port }}
   selector:
     app: opensearch
 ---
@@ -25,11 +26,12 @@ metadata:
     app: rag-indexing
     {{- include "haystack.labels" . | nindent 4 }}
 spec:
+  type: {{ .Values.indexing.service.type }}
   selector:
     app: rag-indexing
   ports:
-    - port: 8001
-      targetPort: 8001
+    - port: {{ .Values.indexing.port }}
+      targetPort: {{ .Values.indexing.port }}
       name: http
 ---
 apiVersion: v1
@@ -41,11 +43,12 @@ metadata:
     app: rag-query
     {{- include "haystack.labels" . | nindent 4 }}
 spec:
+  type: {{ .Values.query.service.type }}
   selector:
     app: rag-query
   ports:
-    - port: 8002
-      targetPort: 8002
+    - port: {{ .Values.query.port }}
+      targetPort: {{ .Values.query.port }}
       name: http
 ---
 apiVersion: v1
@@ -57,9 +60,10 @@ metadata:
     app: rag-frontend
     {{- include "haystack.labels" . | nindent 4 }}
 spec:
+  type: {{ .Values.frontend.service.type }}
   selector:
     app: rag-frontend
   ports:
-    - port: 80
-      targetPort: 80
+    - port: {{ .Values.frontend.port }}
+      targetPort: {{ .Values.frontend.port }}
       name: http
