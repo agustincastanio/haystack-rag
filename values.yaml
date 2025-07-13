@@ -13,11 +13,11 @@ frontend:
     type: ClusterIP
   resources:
     requests:
-      cpu: 50m
-      memory: 64Mi
+      memory: "128Mi"
+      cpu: "50m"
     limits:
-      cpu: 200m
-      memory: 256Mi
+      memory: "512Mi"
+      cpu: "200m"
   env:
     REACT_APP_HAYSTACK_API_URL: /api
     LOG_LEVEL: info
@@ -37,11 +37,13 @@ query:
     type: ClusterIP
   resources:
     requests:
-      cpu: 100m
-      memory: 128Mi
+      memory: "256Mi"
+      cpu: "100m"
+      ephemeral-storage: "2Gi"
     limits:
-      cpu: 500m
-      memory: 512Mi
+      memory: "2Gi"
+      cpu: "500m"
+      ephemeral-storage: "20Gi"
   env:
     LOG_LEVEL: info
   livenessProbe:
@@ -60,11 +62,13 @@ indexing:
     type: ClusterIP
   resources:
     requests:
-      cpu: 100m
-      memory: 128Mi
+      memory: "256Mi"
+      cpu: "100m"
+      ephemeral-storage: "2Gi"
     limits:
-      cpu: 500m
-      memory: 512Mi
+      memory: "2Gi"
+      cpu: "500m"
+      ephemeral-storage: "20Gi"
   env:
     LOG_LEVEL: info
   livenessProbe:
@@ -86,11 +90,13 @@ opensearch:
   javaOpts: "-Xms512m -Xmx512m"
   resources:
     requests:
-      cpu: 500m
-      memory: 1Gi
+      memory: "512Mi"
+      cpu: "200m"
+      ephemeral-storage: "1Gi"
     limits:
-      cpu: 1
-      memory: 2Gi
+      memory: "4Gi"
+      cpu: "1000m"
+      ephemeral-storage: "4Gi"
 
 image:
   registry: public.ecr.aws/e8b9x6t1
