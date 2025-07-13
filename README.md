@@ -2,6 +2,8 @@
 
 A Helm chart for deploying the Haystack Retrieval-Augmented Generation (RAG) stack on Kubernetes.
 
+> **Original code repository:** [deepset-ai/haystack-rag-app](https://github.com/deepset-ai/haystack-rag-app)
+
 ---
 
 ## Project Structure
@@ -91,8 +93,6 @@ helm install rag . -n haystack-rag --create-namespace -f $auth_file
 # or upgrade
 helm upgrade rag . -n haystack-rag -f $auth_file
 
-# open the UI (if using ingress)
-xdg-open http://rag.local:8080/
 ```
 
 > **k3s note:** copy `/etc/rancher/k3s/k3s.yaml` to `~/.kube/config` (or export `KUBECONFIG`) so Helm & kubectl can authenticate.
