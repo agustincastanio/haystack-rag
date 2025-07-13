@@ -51,81 +51,32 @@ jobs:
           helm plugin list
           echo "Testing helm-unittest command:"
           helm unittest --help || echo "helm-unittest not working"
-          echo "Plugin installation status:"
-          ls -la ~/.local/share/helm/plugins/ || echo "No plugins directory found"
-          ls -la ~/.helm/plugins/ || echo "No .helm/plugins directory found"
-          echo "Trying manual installation:"
-          mkdir -p ~/.local/share/helm/plugins/unittest
-          cd ~/.local/share/helm/plugins/unittest
-          curl -L https://github.com/quintush/helm-unittest/releases/latest/download/helm-unittest-linux-amd64.tar.gz | tar xz
-          echo '{"name":"unittest","version":"0.3.0","description":"unittest plugin for Helm"}' > plugin.yaml
-          echo '#!/bin/bash' > unittest.sh
-          echo 'exec "$(dirname "$0")/helm-unittest" "$@"' >> unittest.sh
-          chmod +x unittest.sh
-          chmod +x helm-unittest
-          echo "Manual installation completed"
-          helm plugin list
-          helm unittest --help || echo "Manual installation also failed"
 
-      # 7. Debug directory structure
-      - name: Debug directory structure
-        run: |
-          pwd
-          ls -la
-          echo "CHART_DIR: $CHART_DIR"
-          ls -la "$CHART_DIR" || echo "CHART_DIR not found"
 
-      # 8. Run unit tests
+
+      # 7. Run unit tests
       - name: Run unit tests
         run: |
           cd "$CHART_DIR"
-          echo "Current directory: $(pwd)"
-          echo "Chart.yaml contents:"
-          cat Chart.yaml
-          echo "Testing helm lint first:"
-          helm lint . || echo "Helm lint failed"
-          echo "Running helm unittest:"
-          if command -v helm unittest >/dev/null 2>&1; then
-            helm unittest tests/unit/ . || \
-            helm unittest tests/unit/ || \
-            (cd .. && helm unittest haystack-rag/tests/unit/ haystack-rag) || \
-            helm unittest tests/unit/ "$(pwd)" || \
-            echo "All helm-unittest attempts failed"
-          else
-            echo "helm-unittest not available, skipping unit tests"
-          fi
+          echo "Running helm unittest unit tests..."
+          helm unittest tests/unit/
 
-      # 9. Run integration tests
+      # 8. Run integration tests
       - name: Run integration tests
         run: |
           cd "$CHART_DIR"
-          echo "Current directory: $(pwd)"
-          echo "Chart.yaml contents:"
-          cat Chart.yaml
-          echo "Running helm unittest from chart directory:"
-          if command -v helm unittest >/dev/null 2>&1; then
-            helm unittest tests/integration/ . || \
-            helm unittest tests/integration/ || \
-            (cd .. && helm unittest haystack-rag/tests/integration/ haystack-rag) || \
-            helm unittest tests/integration/ "$(pwd)" || \
-            echo "All helm-unittest attempts failed"
-          else
-            echo "helm-unittest not available, skipping integration tests"
-          fi
+          echo "Running helm unittest integration tests..."
+          helm unittest tests/integration/
 
-      # 10. Generate test report
+      # 9. Generate test report
       - name: Generate test report
         run: |
           cd "$CHART_DIR"
-          if command -v helm unittest >/dev/null 2>&1; then
-            helm unittest --output-type XUnit --output-file test-report.xml .
-          else
-            echo "helm-unittest not available, skipping test report generation"
-            echo '<?xml version="1.0" encoding="UTF-8"?><testsuites></testsuites>' > test-report.xml
-          fi
+          echo "Generating test report..."
+          helm unittest --output-type XUnit --output-file test-report.xml .
         continue-on-error: true
 
-      # 11. Manual chart testing (fallback)
+      # 10. Manual chart testing (fallback)
       - name: Manual chart testing
         run: |
           cd "$CHART_DIR"
@@ -133,7 +84,7 @@ jobs:
           ./tests/test-chart-manual.sh
         continue-on-error: true
 
-      # 12. Upload test results
+      # 11. Upload test results
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
