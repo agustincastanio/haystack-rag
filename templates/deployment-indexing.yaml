@@ -8,7 +8,7 @@ metadata:
     app: rag-indexing
     {{- include "haystack.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.indexing.replicaCount }}
   selector:
     matchLabels:
       app: rag-indexing
@@ -23,8 +23,27 @@ spec:
         envFrom:
         - configMapRef: { name: rag-config }
         - secretRef  : { name: rag-secrets }
+        env:
+        {{- range $key, $value := .Values.indexing.env }}
+        - name: {{ $key }}
+          value: "{{ $value }}"
+        {{- end }}
         ports:
-        - containerPort: 8001
+        - containerPort: {{ .Values.indexing.port }}
+        resources:
+          {{- toYaml .Values.indexing.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.indexing.livenessProbe.path }}
+            port: {{ .Values.indexing.port }}
+          initialDelaySeconds: {{ .Values.indexing.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.indexing.livenessProbe.periodSeconds }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.indexing.readinessProbe.path }}
+            port: {{ .Values.indexing.port }}
+          initialDelaySeconds: {{ .Values.indexing.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.indexing.readinessProbe.periodSeconds }}
         volumeMounts:
         - name: filestore
           mountPath: /app/files

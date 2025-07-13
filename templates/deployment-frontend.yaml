@@ -1,4 +1,4 @@
-# templates/deployment-frontend.yaml (unchanged since last fix)
+# templates/deployment-frontend.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,7 +8,7 @@ metadata:
     app: rag-frontend
     {{- include "haystack.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.frontend.replicaCount }}
   selector:
     matchLabels:
       app: rag-frontend
@@ -22,7 +22,23 @@ spec:
         image: {{ .Values.image.registry }}/haystack-frontend:{{ .Values.image.tag }}
         args: ["nginx", "-g", "daemon off;"]
         env:
-        - name: REACT_APP_HAYSTACK_API_URL
-          value: "/api"
+        {{- range $key, $value := .Values.frontend.env }}
+        - name: {{ $key }}
+          value: "{{ $value }}"
+        {{- end }}
         ports:
-        - containerPort: 80
+        - containerPort: {{ .Values.frontend.port }}
+        resources:
+          {{- toYaml .Values.frontend.resources | nindent 10 }}
+        livenessProbe:
+          httpGet:
+            path: {{ .Values.frontend.livenessProbe.path }}
+            port: {{ .Values.frontend.port }}
+          initialDelaySeconds: {{ .Values.frontend.livenessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.frontend.livenessProbe.periodSeconds }}
+        readinessProbe:
+          httpGet:
+            path: {{ .Values.frontend.readinessProbe.path }}
+            port: {{ .Values.frontend.port }}
+          initialDelaySeconds: {{ .Values.frontend.readinessProbe.initialDelaySeconds }}
+          periodSeconds: {{ .Values.frontend.readinessProbe.periodSeconds }}

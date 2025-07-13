@@ -7,4 +7,5 @@ metadata:
     {{- include "haystack.labels" . | nindent 4 }}
 spec:
   buffering:
-    maxRequestBodyBytes: 104857600
+    maxRequestBodyBytes: {{ .Values.ingress.buffering.maxRequestBodyBytes }}
+    memRequestBodyBytes: {{ .Values.ingress.buffering.memRequestBodyBytes }}

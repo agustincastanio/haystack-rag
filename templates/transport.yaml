@@ -7,6 +7,6 @@ metadata:
     {{- include "haystack.labels" . | nindent 4 }}
 spec:
   forwardingTimeouts:
-    dialTimeout: 300s
-    responseHeaderTimeout: 600s
-    idleConnTimeout: 600s
+    dialTimeout: {{ .Values.ingress.timeouts.readTimeout }}s
+    responseHeaderTimeout: {{ .Values.ingress.timeouts.writeTimeout }}s
+    idleConnTimeout: {{ .Values.ingress.timeouts.idleTimeout }}s

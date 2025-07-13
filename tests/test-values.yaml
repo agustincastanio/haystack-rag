@@ -4,46 +4,110 @@
 namespace: test-namespace
 hostname: test.example.com
 
-image:
-  registry: test.registry.com
-  tag: test-tag
-
 secret:
   opensearchPassword: TestPassword123!
   openaiApiKey: sk-test-key
 
+frontend:
+  replicaCount: 2
+  port: 8080
+  service:
+    type: NodePort
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+  env:
+    REACT_APP_HAYSTACK_API_URL: /custom-api
+    LOG_LEVEL: debug
+  livenessProbe:
+    path: /healthz
+    initialDelaySeconds: 5
+    periodSeconds: 5
+  readinessProbe:
+    path: /readyz
+    initialDelaySeconds: 3
+    periodSeconds: 3
+
+query:
+  replicaCount: 2
+  port: 9002
+  service:
+    type: NodePort
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 600m
+      memory: 1Gi
+  env:
+    LOG_LEVEL: debug
+  livenessProbe:
+    path: /custom-health
+    initialDelaySeconds: 7
+    periodSeconds: 7
+  readinessProbe:
+    path: /custom-ready
+    initialDelaySeconds: 4
+    periodSeconds: 4
+
+indexing:
+  replicaCount: 2
+  port: 9001
+  service:
+    type: NodePort
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 600m
+      memory: 1Gi
+  env:
+    LOG_LEVEL: debug
+  livenessProbe:
+    path: /custom-health
+    initialDelaySeconds: 7
+    periodSeconds: 7
+  readinessProbe:
+    path: /custom-ready
+    initialDelaySeconds: 4
+    periodSeconds: 4
+
 opensearch:
   replicaCount: 2
+  port: 19200
+  service:
+    type: NodePort
   storageClass: test-storage-class
   storageSize: 20Gi
   javaOpts: "-Xms1g -Xmx1g"
+  resources:
+    requests:
+      cpu: 800m
+      memory: 2Gi
+    limits:
+      cpu: 2
+      memory: 4Gi
 
-resources:
-  frontend:
-    requests:
-      memory: "128Mi"
-      cpu: "100m"
-    limits:
-      memory: "256Mi"
-      cpu: "200m"
-  indexing:
-    requests:
-      memory: "256Mi"
-      cpu: "200m"
-    limits:
-      memory: "512Mi"
-      cpu: "500m"
-  query:
-    requests:
-      memory: "256Mi"
-      cpu: "200m"
-    limits:
-      memory: "512Mi"
-      cpu: "500m"
-  opensearch:
-    requests:
-      memory: "1Gi"
-      cpu: "500m"
-    limits:
-      memory: "2Gi"
-      cpu: "1000m" 
+image:
+  registry: test.registry.com
+  tag: test-tag
+
+ingress:
+  enabled: true
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.middlewares: custom-strip-api@kubernetescrd,custom-buffering@kubernetescrd
+  buffering:
+    enabled: true
+    maxRequestBodyBytes: 209715200
+    memRequestBodyBytes: 20971520
+  timeouts:
+    readTimeout: 1200
+    writeTimeout: 1200
+    idleTimeout: 1200 
