@@ -175,3 +175,7 @@ See [`IMAGES.md`](./IMAGES.md) for instructions on how to build and push the req
 
 ---
 
+## Extra Topics & Bonus Points
+
+For answers to the bonus points and additional topics from the original assignment, see [EXTRA_TOPICS.md](./EXTRA_TOPICS.md).
+
