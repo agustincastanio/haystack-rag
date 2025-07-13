@@ -1,0 +1,91 @@
+suite: Test Deployments
+templates:
+  - deployment-frontend.yaml
+  - deployment-indexing.yaml
+  - deployment-query.yaml
+
+tests:
+  - it: should render frontend deployment with default values
+    template: deployment-frontend.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          kind: Deployment
+      - contains:
+          metadata:
+            name: rag-frontend
+            namespace: haystack-rag
+      - contains:
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: rag-frontend
+      - contains:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: app
+                    image: public.ecr.aws/e8b9x6t1/haystack-frontend:0.1.0
+                    ports:
+                      - containerPort: 80
+
+  - it: should render indexing deployment with default values
+    template: deployment-indexing.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          kind: Deployment
+      - contains:
+          metadata:
+            name: rag-indexing
+            namespace: haystack-rag
+      - contains:
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: rag-indexing
+
+  - it: should render query deployment with default values
+    template: deployment-query.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          kind: Deployment
+      - contains:
+          metadata:
+            name: rag-query
+            namespace: haystack-rag
+      - contains:
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: rag-query
+
+  - it: should use custom namespace when provided
+    template: deployment-frontend.yaml
+    set:
+      namespace: custom-namespace
+    asserts:
+      - contains:
+          metadata:
+            namespace: custom-namespace
+
+  - it: should use custom image when provided
+    template: deployment-frontend.yaml
+    set:
+      image.registry: custom.registry.com
+      image.tag: latest
+    asserts:
+      - contains:
+          spec:
+            template:
+              spec:
+                containers:
+                  - image: custom.registry.com/haystack-frontend:latest 

@@ -1,0 +1,89 @@
+suite: Test OpenSearch
+templates:
+  - statefulset-opensearch.yaml
+  - pvc-opensearch.yaml
+
+tests:
+  - it: should render OpenSearch StatefulSet with default values
+    template: statefulset-opensearch.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          kind: StatefulSet
+      - contains:
+          metadata:
+            name: opensearch
+            namespace: haystack-rag
+      - contains:
+          spec:
+            serviceName: opensearch
+            replicas: 1
+            selector:
+              matchLabels:
+                app: opensearch
+      - contains:
+          spec:
+            template:
+              spec:
+                containers:
+                  - name: opensearch
+                    image: opensearchproject/opensearch:2.18.0
+                    env:
+                      - name: discovery.type
+                        value: single-node
+                      - name: bootstrap.memory_lock
+                        value: "true"
+                      - name: OPENSEARCH_JAVA_OPTS
+                        value: "-Xms512m -Xmx512m"
+
+  - it: should render OpenSearch PVC with default values
+    template: pvc-opensearch.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          kind: PersistentVolumeClaim
+      - contains:
+          metadata:
+            name: opensearch-data
+            namespace: haystack-rag
+      - contains:
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 10Gi
+            storageClassName: local-path
+
+  - it: should use custom OpenSearch configuration
+    template: statefulset-opensearch.yaml
+    set:
+      opensearch.replicaCount: 3
+      opensearch.javaOpts: "-Xms1g -Xmx1g"
+    asserts:
+      - contains:
+          spec:
+            replicas: 3
+      - contains:
+          spec:
+            template:
+              spec:
+                containers:
+                  - env:
+                      - name: OPENSEARCH_JAVA_OPTS
+                        value: "-Xms1g -Xmx1g"
+
+  - it: should use custom storage configuration
+    template: pvc-opensearch.yaml
+    set:
+      opensearch.storageClass: fast-ssd
+      opensearch.storageSize: 50Gi
+    asserts:
+      - contains:
+          spec:
+            storageClassName: fast-ssd
+            resources:
+              requests:
+                storage: 50Gi 

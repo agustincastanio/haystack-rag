@@ -1,0 +1,16 @@
+suite: Test Basic Chart Structure
+templates:
+  - Chart.yaml
+
+tests:
+  - it: should have correct chart metadata
+    template: Chart.yaml
+    asserts:
+      - hasDocuments:
+          count: 1
+      - contains:
+          apiVersion: v2
+          name: haystack-rag
+          version: 0.1.0
+          type: application
+          appVersion: "0.1.0" 

@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-connection-test"
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: connection-test
+    {{- include "haystack.labels" . | nindent 4 }}
+spec:
+  containers:
+  - name: connection-test
+    image: curlimages/curl:8.4.0
+    command:
+    - /bin/sh
+    - -c
+    - |
+      echo "Testing OpenSearch connectivity..."
+      curl -f -u admin:{{ .Values.secret.opensearchPassword }} http://opensearch:9200/_cluster/health || exit 1
+      
+      echo "Testing frontend service..."
+      curl -f http://rag-frontend:80/ || exit 1
+      
+      echo "Testing indexing API..."
+      curl -f http://rag-indexing:8000/health || exit 1
+      
+      echo "Testing query API..."
+      curl -f http://rag-query:8000/health || exit 1
+      
+      echo "All connectivity tests passed!"
+    env:
+    - name: OPENSEARCH_PASSWORD
+      value: {{ .Values.secret.opensearchPassword }}
+  restartPolicy: Never 

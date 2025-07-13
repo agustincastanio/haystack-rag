@@ -1,0 +1,49 @@
+# Test values for the Haystack RAG chart
+# This file contains different configurations for testing various scenarios
+
+namespace: test-namespace
+hostname: test.example.com
+
+image:
+  registry: test.registry.com
+  tag: test-tag
+
+secret:
+  opensearchPassword: TestPassword123!
+  openaiApiKey: sk-test-key
+
+opensearch:
+  replicaCount: 2
+  storageClass: test-storage-class
+  storageSize: 20Gi
+  javaOpts: "-Xms1g -Xmx1g"
+
+resources:
+  frontend:
+    requests:
+      memory: "128Mi"
+      cpu: "100m"
+    limits:
+      memory: "256Mi"
+      cpu: "200m"
+  indexing:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  query:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  opensearch:
+    requests:
+      memory: "1Gi"
+      cpu: "500m"
+    limits:
+      memory: "2Gi"
+      cpu: "1000m" 
