@@ -1,0 +1,63 @@
+suite: Test Services
+templates:
+  - service.yaml
+
+tests:
+  - it: should render services with correct selectors and ports
+    template: service.yaml
+    asserts:
+      - hasDocuments:
+          count: 4  # opensearch, rag-frontend, rag-indexing, rag-query
+      - contains:
+          kind: Service
+          metadata:
+            name: opensearch
+            namespace: haystack-rag
+          spec:
+            selector:
+              app: opensearch
+            ports:
+              - port: 9200
+                targetPort: 9200
+      - contains:
+          kind: Service
+          metadata:
+            name: rag-frontend
+            namespace: haystack-rag
+          spec:
+            selector:
+              app: rag-frontend
+            ports:
+              - port: 80
+                targetPort: 80
+      - contains:
+          kind: Service
+          metadata:
+            name: rag-indexing
+            namespace: haystack-rag
+          spec:
+            selector:
+              app: rag-indexing
+            ports:
+              - port: 8000
+                targetPort: 8000
+      - contains:
+          kind: Service
+          metadata:
+            name: rag-query
+            namespace: haystack-rag
+          spec:
+            selector:
+              app: rag-query
+            ports:
+              - port: 8000
+                targetPort: 8000
+
+  - it: should use custom namespace when provided
+    template: service.yaml
+    set:
+      namespace: custom-namespace
+    asserts:
+      - contains:
+          metadata:
+            namespace: custom-namespace 

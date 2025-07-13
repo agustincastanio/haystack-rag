@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-opensearch-test"
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": test
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: opensearch-test
+    {{- include "haystack.labels" . | nindent 4 }}
+spec:
+  containers:
+  - name: opensearch-test
+    image: curlimages/curl:8.4.0
+    command:
+    - /bin/sh
+    - -c
+    - |
+      echo "Waiting for OpenSearch to be ready..."
+      until curl -f -u admin:{{ .Values.secret.opensearchPassword }} http://opensearch:9200/_cluster/health; do
+        echo "OpenSearch not ready yet, waiting..."
+        sleep 5
+      done
+      
+      echo "Testing OpenSearch cluster health..."
+      HEALTH=$(curl -s -u admin:{{ .Values.secret.opensearchPassword }} http://opensearch:9200/_cluster/health | jq -r '.status')
+      if [ "$HEALTH" != "green" ] && [ "$HEALTH" != "yellow" ]; then
+        echo "OpenSearch cluster health is $HEALTH, expected green or yellow"
+        exit 1
+      fi
+      
+      echo "Testing OpenSearch index creation..."
+      curl -f -X PUT -u admin:{{ .Values.secret.opensearchPassword }} \
+        -H "Content-Type: application/json" \
+        -d '{"settings":{"number_of_shards":1,"number_of_replicas":0}}' \
+        http://opensearch:9200/test-index || exit 1
+      
+      echo "Testing OpenSearch document indexing..."
+      curl -f -X POST -u admin:{{ .Values.secret.opensearchPassword }} \
+        -H "Content-Type: application/json" \
+        -d '{"title":"test","content":"test content"}' \
+        http://opensearch:9200/test-index/_doc || exit 1
+      
+      echo "Testing OpenSearch search..."
+      curl -f -X GET -u admin:{{ .Values.secret.opensearchPassword }} \
+        http://opensearch:9200/test-index/_search || exit 1
+      
+      echo "Cleaning up test index..."
+      curl -f -X DELETE -u admin:{{ .Values.secret.opensearchPassword }} \
+        http://opensearch:9200/test-index || true
+      
+      echo "OpenSearch functionality tests passed!"
+    env:
+    - name: OPENSEARCH_PASSWORD
+      value: {{ .Values.secret.opensearchPassword }}
+  restartPolicy: Never 

@@ -107,11 +107,13 @@ xdg-open http://rag.local:8080/
 
 ## GitHub Actions CI
 
-A minimal workflow (**.github/workflows/helm-lint.yml**) is included:
-1. **helm lint --strict** against `values.yaml`.
-2. `helm template` → **kubeconform -strict** to schema‑validate every object.
+A comprehensive workflow (**.github/workflows/chart-ci.yml**) is included:
+1. **helm lint --strict** against `values.yaml`
+2. **helm template** → **kubeconform -strict** to schema‑validate every object
+3. **helm-unittest** for unit and integration tests
+4. **Test report generation** in XUnit format
 
-Add it to your repo and each PR will reject malformed YAML before it reaches the cluster.
+Add it to your repo and each PR will be thoroughly tested before merging.
 
 ---
 
