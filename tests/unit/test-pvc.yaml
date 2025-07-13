@@ -1,0 +1,19 @@
+suite: Test OpenSearch PVC
+templates:
+  - pvc-opensearch.yaml
+
+tests:
+  - it: should render PVC with correct storage class and size
+    set:
+      opensearch.storageClass: fast-ssd
+      opensearch.storageSize: 50Gi
+    asserts:
+      - contains:
+          kind: PersistentVolumeClaim
+          metadata:
+            name: opensearch-data
+          spec:
+            storageClassName: fast-ssd
+            resources:
+              requests:
+                storage: 50Gi 

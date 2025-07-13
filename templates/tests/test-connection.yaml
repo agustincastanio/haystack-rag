@@ -12,22 +12,23 @@ metadata:
 spec:
   containers:
   - name: connection-test
-    image: curlimages/curl:8.4.0
+    image: alpine:3.19
     command:
     - /bin/sh
     - -c
     - |
+      apk add --no-cache curl jq
       echo "Testing OpenSearch connectivity..."
-      curl -f -u admin:{{ .Values.secret.opensearchPassword }} http://opensearch:9200/_cluster/health || exit 1
+      curl -fk -u admin:{{ .Values.secret.opensearchPassword }} https://opensearch:{{ .Values.opensearch.port }}/_cluster/health || exit 1
       
       echo "Testing frontend service..."
-      curl -f http://rag-frontend:80/ || exit 1
+      curl -f http://rag-frontend:{{ .Values.frontend.port }}/ || exit 1
       
       echo "Testing indexing API..."
-      curl -f http://rag-indexing:8000/health || exit 1
+      curl -f http://rag-indexing:{{ .Values.indexing.port }}/health || exit 1
       
       echo "Testing query API..."
-      curl -f http://rag-query:8000/health || exit 1
+      curl -f http://rag-query:{{ .Values.query.port }}/health || exit 1
       
       echo "All connectivity tests passed!"
     env:

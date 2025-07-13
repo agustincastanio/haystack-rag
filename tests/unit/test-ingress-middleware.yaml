@@ -1,0 +1,47 @@
+suite: Test Ingress and Middleware
+templates:
+  - ingressroute.yaml
+  - middleware.yaml
+  - middleware-strip.yaml
+  - transport.yaml
+
+tests:
+  - it: should render IngressRoute with correct hostname and routes
+    set:
+      hostname: custom.example.com
+    asserts:
+      - contains:
+          kind: IngressRoute
+          metadata:
+            name: rag
+          spec:
+            routes:
+              - match: Host(`custom.example.com`)
+
+  - it: should render Middleware with correct configuration
+    asserts:
+      - contains:
+          kind: Middleware
+          metadata:
+            name: buffering
+          spec:
+            buffering:
+              maxRequestBodyBytes: 104857600
+
+  - it: should render strip middleware with correct configuration
+    asserts:
+      - contains:
+          kind: Middleware
+          metadata:
+            name: strip-api
+          spec:
+            stripPrefix:
+              prefixes:
+                - /api
+
+  - it: should render transport configuration
+    asserts:
+      - contains:
+          kind: ServersTransport
+          metadata:
+            name: timeouts 

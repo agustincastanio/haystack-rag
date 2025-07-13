@@ -24,7 +24,6 @@ haystack-rag/
 │   ├── ingressroute.yaml           # IngressRoute definition
 │   ├── middleware-strip.yaml       # Traefik middleware (strip)
 │   ├── middleware.yaml             # Traefik middleware
-│   ├── namespace.yaml              # Namespace manifest
 │   ├── NOTES.txt                   # Post-install instructions
 │   ├── pvc-opensearch.yaml         # OpenSearch PVC
 │   ├── secret.yaml                 # Secrets manifest
@@ -88,10 +87,11 @@ secret:
 EOF
 
 # install the chart
-helm install rag . -n haystack-rag --create-namespace -f $auth_file
+kubectl create namespace haystack-rag
+helm install rag . -f $auth_file
 
 # or upgrade
-helm upgrade rag . -n haystack-rag -f $auth_file
+helm upgrade rag . -f $auth_file
 
 ```
 

@@ -3,61 +3,58 @@ templates:
   - service.yaml
 
 tests:
-  - it: should render services with correct selectors and ports
-    template: service.yaml
+  - it: should render frontend service with correct port and selector
+    set:
+      frontend.port: 8080
     asserts:
-      - hasDocuments:
-          count: 4  # opensearch, rag-frontend, rag-indexing, rag-query
-      - contains:
-          kind: Service
-          metadata:
-            name: opensearch
-            namespace: haystack-rag
-          spec:
-            selector:
-              app: opensearch
-            ports:
-              - port: 9200
-                targetPort: 9200
       - contains:
           kind: Service
           metadata:
             name: rag-frontend
-            namespace: haystack-rag
           spec:
+            ports:
+              - port: 8080
             selector:
               app: rag-frontend
-            ports:
-              - port: 80
-                targetPort: 80
+
+  - it: should render indexing service with correct port and selector
+    set:
+      indexing.port: 9001
+    asserts:
       - contains:
           kind: Service
           metadata:
             name: rag-indexing
-            namespace: haystack-rag
           spec:
+            ports:
+              - port: 9001
             selector:
               app: rag-indexing
-            ports:
-              - port: 8000
-                targetPort: 8000
+
+  - it: should render query service with correct port and selector
+    set:
+      query.port: 9002
+    asserts:
       - contains:
           kind: Service
           metadata:
             name: rag-query
-            namespace: haystack-rag
           spec:
+            ports:
+              - port: 9002
             selector:
               app: rag-query
-            ports:
-              - port: 8000
-                targetPort: 8000
 
-  - it: should use custom namespace when provided
-    template: service.yaml
+  - it: should render opensearch service with correct port and selector
     set:
-      namespace: custom-namespace
+      opensearch.port: 9300
     asserts:
       - contains:
+          kind: Service
           metadata:
-            namespace: custom-namespace 
+            name: opensearch
+          spec:
+            ports:
+              - port: 9300
+            selector:
+              app: opensearch 

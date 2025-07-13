@@ -12,43 +12,44 @@ metadata:
 spec:
   containers:
   - name: opensearch-test
-    image: curlimages/curl:8.4.0
+    image: alpine:3.19
     command:
     - /bin/sh
     - -c
     - |
+      apk add --no-cache curl jq
       echo "Waiting for OpenSearch to be ready..."
-      until curl -f -u admin:{{ .Values.secret.opensearchPassword }} http://opensearch:9200/_cluster/health; do
+      until curl -fk -u admin:{{ .Values.secret.opensearchPassword }} https://opensearch:{{ .Values.opensearch.port }}/_cluster/health; do
         echo "OpenSearch not ready yet, waiting..."
         sleep 5
       done
       
       echo "Testing OpenSearch cluster health..."
-      HEALTH=$(curl -s -u admin:{{ .Values.secret.opensearchPassword }} http://opensearch:9200/_cluster/health | jq -r '.status')
+      HEALTH=$(curl -sfk -u admin:{{ .Values.secret.opensearchPassword }} https://opensearch:{{ .Values.opensearch.port }}/_cluster/health | jq -r '.status')
       if [ "$HEALTH" != "green" ] && [ "$HEALTH" != "yellow" ]; then
         echo "OpenSearch cluster health is $HEALTH, expected green or yellow"
         exit 1
       fi
       
       echo "Testing OpenSearch index creation..."
-      curl -f -X PUT -u admin:{{ .Values.secret.opensearchPassword }} \
+      curl -fk -X PUT -u admin:{{ .Values.secret.opensearchPassword }} \
         -H "Content-Type: application/json" \
         -d '{"settings":{"number_of_shards":1,"number_of_replicas":0}}' \
-        http://opensearch:9200/test-index || exit 1
+        https://opensearch:{{ .Values.opensearch.port }}/test-index || exit 1
       
       echo "Testing OpenSearch document indexing..."
-      curl -f -X POST -u admin:{{ .Values.secret.opensearchPassword }} \
+      curl -fk -X POST -u admin:{{ .Values.secret.opensearchPassword }} \
         -H "Content-Type: application/json" \
         -d '{"title":"test","content":"test content"}' \
-        http://opensearch:9200/test-index/_doc || exit 1
+        https://opensearch:{{ .Values.opensearch.port }}/test-index/_doc || exit 1
       
       echo "Testing OpenSearch search..."
-      curl -f -X GET -u admin:{{ .Values.secret.opensearchPassword }} \
-        http://opensearch:9200/test-index/_search || exit 1
+      curl -fk -X GET -u admin:{{ .Values.secret.opensearchPassword }} \
+        https://opensearch:{{ .Values.opensearch.port }}/test-index/_search || exit 1
       
       echo "Cleaning up test index..."
-      curl -f -X DELETE -u admin:{{ .Values.secret.opensearchPassword }} \
-        http://opensearch:9200/test-index || true
+      curl -fk -X DELETE -u admin:{{ .Values.secret.opensearchPassword }} \
+        https://opensearch:{{ .Values.opensearch.port }}/test-index || true
       
       echo "OpenSearch functionality tests passed!"
     env:

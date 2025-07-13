@@ -1,6 +1,5 @@
 suite: Test Chart Integration
 templates:
-  - namespace.yaml
   - secret.yaml
   - configmap.yaml
   - pvc-opensearch.yaml
@@ -19,10 +18,6 @@ tests:
     asserts:
       - hasDocuments:
           count: 13  # namespace + secret + configmap + pvc + statefulset + 3 deployments + 4 services + 3 traefik resources
-      - contains:
-          kind: Namespace
-          metadata:
-            name: haystack-rag
       - contains:
           kind: Secret
           metadata:
