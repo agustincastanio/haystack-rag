@@ -61,48 +61,19 @@ jobs:
       - name: Run unit tests
         run: |
           cd "$CHART_DIR"
-          pwd
-          ls -la
-          # Try running from current directory first
-          helm unittest tests/unit/ . || \
-          # Try running without chart path
-          helm unittest tests/unit/ || \
-          # Try running from parent directory
-          (cd .. && helm unittest haystack-rag/tests/unit/ haystack-rag) || \
-          # Try running with absolute path
-          helm unittest tests/unit/ "$(pwd)" || \
-          # Last resort: try running from root
-          helm unittest . tests/unit/
+          helm unittest tests/unit/
 
       # 9. Run integration tests
       - name: Run integration tests
         run: |
           cd "$CHART_DIR"
-          # Try running from current directory first
-          helm unittest tests/integration/ . || \
-          # Try running without chart path
-          helm unittest tests/integration/ || \
-          # Try running from parent directory
-          (cd .. && helm unittest haystack-rag/tests/integration/ haystack-rag) || \
-          # Try running with absolute path
-          helm unittest tests/integration/ "$(pwd)" || \
-          # Last resort: try running from root
-          helm unittest . tests/integration/
+          helm unittest tests/integration/
 
       # 10. Generate test report
       - name: Generate test report
         run: |
           cd "$CHART_DIR"
-          # Try running from current directory first
-          helm unittest --output-type XUnit --output-file test-report.xml . || \
-          # Try running without chart path
-          helm unittest --output-type XUnit --output-file test-report.xml || \
-          # Try running from parent directory
-          (cd .. && helm unittest --output-type XUnit --output-file test-report.xml haystack-rag) || \
-          # Try running with absolute path
-          helm unittest --output-type XUnit --output-file test-report.xml "$(pwd)" || \
-          # Last resort: try running from root
-          helm unittest --output-type XUnit --output-file test-report.xml . .
+          helm unittest --output-type XUnit --output-file test-report.xml .
         continue-on-error: true
 
       # 11. Upload test results

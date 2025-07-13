@@ -12,4 +12,5 @@ tests:
           apiVersion: v2
           name: haystack-rag
           version: 0.1.0
-          type: application 
+          type: application
+          appVersion: "0.1.0" 
