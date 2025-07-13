@@ -101,6 +101,56 @@ xdg-open http://rag.local:8080/
 
 ---
 
+## Health Checks & Verification
+
+After deploying the chart, use these steps to verify your deployment is healthy:
+
+### 1. Check Pod and Service Status
+
+```bash
+kubectl get pods -n haystack-rag
+kubectl get svc -n haystack-rag
+kubectl get ingressroute -n haystack-rag
+```
+
+All pods should be in the `Running` or `Completed` state. Services and ingress routes should be listed.
+
+### 2. Verify OpenSearch
+
+Check OpenSearch readiness:
+
+```bash
+kubectl port-forward svc/opensearch 9200:9200 -n haystack-rag &
+curl -u admin:<your-opensearchPassword> http://localhost:9200/
+```
+
+You should see OpenSearch version info in the response.
+
+### 3. Access the UI
+
+Open your browser to [http://rag.local:8080/](http://rag.local:8080/) (or your configured hostname/port). The Haystack RAG UI should load.
+
+### 4. Check Logs
+
+If something isn’t working, inspect logs:
+
+```bash
+kubectl logs deployment/rag-query -n haystack-rag
+kubectl logs deployment/rag-indexing -n haystack-rag
+kubectl logs deployment/rag-frontend -n haystack-rag
+kubectl logs statefulset/opensearch -n haystack-rag
+```
+
+### 5. Troubleshooting
+
+- Ensure all pods are running: `kubectl get pods -n haystack-rag`
+- Check for CrashLoopBackOff or errors in logs
+- Verify secrets and configmaps are mounted:  
+  `kubectl describe pod <pod-name> -n haystack-rag`
+- Confirm ingress or port-forwarding is set up correctly
+
+---
+
 ## Values reference (excerpt)
 
 | Key | Default | Description |
@@ -130,8 +180,8 @@ xdg-open http://rag.local:8080/
 A comprehensive workflow (**.github/workflows/chart-ci.yml**) is included:
 1. **helm lint --strict** against `values.yaml`
 2. **helm template** → **kubeconform -strict** to schema‑validate every object
-3. **helm-unittest** for unit and integration tests
-4. **Test report generation** in XUnit format
+3. **Python-based testing framework** for comprehensive chart validation
+4. **Test report generation** in XUnit and JSON formats
 
 Add it to your repo and each PR will be thoroughly tested before merging.
 
