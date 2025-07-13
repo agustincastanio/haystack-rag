@@ -1,4 +1,4 @@
-name: Helm chart lint & schema check
+name: Helm Chart Testing
 
 on:
   push:
@@ -6,103 +6,68 @@ on:
   pull_request:
 
 env:
-  CHART_DIR: "."            # chart lives at repo root
+  CHART_DIR: "."
 
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
 
     steps:
       # 1. Checkout code
       - uses: actions/checkout@v4
 
-      # 2. Install Helm 3
+      # 2. Setup Helm
       - name: Setup Helm
         uses: azure/setup-helm@v3
         with:
           version: v3.14.3
 
-      # 3. Install kubeconform (K8s schema validator)
+      # 3. Setup Python for testing
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # 4. Install testing dependencies
+      - name: Install dependencies
+        run: |
+          pip install pyyaml kubernetes
+
+      # 5. Helm lint
+      - name: Helm lint
+        run: |
+          cd "$CHART_DIR"
+          helm lint --strict . -f values.yaml
+
+      # 6. Schema validation
       - name: Install kubeconform
         run: |
           curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.5/kubeconform-linux-amd64.tar.gz \
             | sudo tar -xz -C /usr/local/bin kubeconform
-          kubeconform -v
 
-      # 4. Helm strict lint
-      - name: Helm strict lint
-        run: |
-          helm lint --strict "$CHART_DIR" -f "$CHART_DIR/values.yaml"
-
-      # 5. Render chart & validate (skip Traefik CRDs)
-      - name: Render & kubeconform
-        run: |
-          helm template "$CHART_DIR" | \
-            kubeconform -strict -summary \
-              -skip IngressRoute,Middleware,ServersTransport
-
-      # 6. Install helm-unittest plugin
-      - name: Install helm-unittest
-        run: |
-          echo "Installing helm-unittest plugin..."
-          helm plugin install https://github.com/quintush/helm-unittest
-          echo "Plugin installation completed"
-          echo "Available plugins:"
-          helm plugin list
-          echo "Testing helm-unittest command:"
-          helm unittest --help || echo "helm-unittest not working"
-          echo "Testing helm-unittest with debug:"
-          helm unittest --debug tests/unit/ . || echo "Debug test failed"
-
-
-
-      # 7. Run unit tests (optional - helm-unittest has compatibility issues)
-      - name: Run unit tests
+      - name: Schema validation
         run: |
           cd "$CHART_DIR"
-          echo "Current directory: $(pwd)"
-          echo "Chart.yaml exists: $(ls -la Chart.yaml)"
-          echo "Tests directory exists: $(ls -la tests/)"
-          echo "Running helm unittest unit tests..."
-          # Try different approaches based on helm-unittest documentation
-          helm unittest tests/unit/ . || \
-          helm unittest tests/unit/ || \
-          helm unittest . tests/unit/ || \
-          helm unittest tests/unit/minimal_test.yaml . || \
-          (cd .. && helm unittest haystack-rag/tests/unit/ haystack-rag) || \
-          echo "All helm-unittest attempts failed"
-        continue-on-error: true
+          helm template . | kubeconform -strict -summary -skip IngressRoute,Middleware,ServersTransport
 
-      # 8. Run integration tests (optional - helm-unittest has compatibility issues)
-      - name: Run integration tests
+      # 7. Run comprehensive tests
+      - name: Run chart tests
         run: |
           cd "$CHART_DIR"
-          echo "Running helm unittest integration tests..."
-          helm unittest tests/integration/ || echo "Integration tests failed"
-        continue-on-error: true
+          python tests/run-tests.py
 
-      # 9. Generate test report (optional - helm-unittest has compatibility issues)
+      # 8. Generate test report
       - name: Generate test report
         run: |
           cd "$CHART_DIR"
-          echo "Generating test report..."
-          helm unittest --output-type XUnit --output-file test-report.xml . || \
-          echo "Test report generation failed, creating empty report" && \
-          echo '<?xml version="1.0" encoding="UTF-8"?><testsuites></testsuites>' > test-report.xml
-        continue-on-error: true
+          python tests/generate-report.py
 
-      # 10. Manual chart testing (primary testing method)
-      - name: Manual chart testing
-        run: |
-          cd "$CHART_DIR"
-          chmod +x tests/test-chart-manual.sh
-          ./tests/test-chart-manual.sh
-        continue-on-error: true
-
-      # 11. Upload test results
+      # 9. Upload test results
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: test-results
-          path: test-report.xml
+          path: |
+            test-report.xml
+            test-results.json

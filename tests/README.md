@@ -1,117 +1,162 @@
-# Helm Chart Tests
+# Helm Chart Testing Framework
 
-This directory contains comprehensive tests for the Haystack RAG Helm chart.
+This directory contains a comprehensive testing framework for the Haystack RAG Helm chart.
+
+## Overview
+
+The testing framework uses Python to provide reliable, comprehensive testing of Helm chart functionality without relying on external plugins that may have compatibility issues.
 
 ## Test Structure
 
-### Unit Tests (`tests/unit/`)
-- **test-deployments.yaml**: Tests for deployment templates
-- **test-opensearch.yaml**: Tests for OpenSearch StatefulSet and PVC
-- **test-services.yaml**: Tests for service templates
-- **test-ingress.yaml**: Tests for ingress and middleware
-- **test-secrets-configmap.yaml**: Tests for secrets and configmap
+### Core Testing Files
+- **`run-tests.py`**: Main testing framework that validates chart rendering and functionality
+- **`generate-report.py`**: Generates XUnit format test reports for CI integration
+- **`test-values.yaml`**: Test values for validating custom configurations
 
-### Integration Tests (`tests/integration/`)
-- **test-chart-integration.yaml**: Tests the entire chart as a whole
+### Test Coverage
 
-### End-to-End Tests (`templates/tests/`)
-- **test-connection.yaml**: Tests connectivity between components
-- **test-opensearch.yaml**: Tests OpenSearch functionality
+The framework tests:
+
+#### ✅ Chart Rendering
+- Basic chart rendering with default values
+- Chart rendering with custom values
+- Template syntax validation
+
+#### ✅ Resource Validation
+- All required Kubernetes resources (Namespace, Deployments, Services, StatefulSet, PVC, Secret, ConfigMap)
+- Specific named resources (rag-frontend, rag-query, rag-indexing, opensearch, etc.)
+- Resource naming consistency
+
+#### ✅ Configuration Validation
+- Namespace consistency across all resources
+- Custom namespace application
+- Service selectors and port configurations
+- Image references and versions
+- Environment variable configuration
+
+#### ✅ Integration Testing
+- End-to-end chart functionality
+- Custom values processing
+- Template variable substitution
 
 ## Running Tests
 
 ### Prerequisites
 ```bash
-# Install helm-unittest plugin
-helm plugin install https://github.com/quintush/helm-unittest
+# Install Python dependencies
+pip install pyyaml kubernetes
 
-# Install jq for JSON parsing in tests
-# On Ubuntu/Debian: sudo apt-get install jq
-# On macOS: brew install jq
-# On Windows: choco install jq
+# Ensure Helm is installed
+helm version
 ```
 
-### Unit and Integration Tests
+### Local Testing
 ```bash
-# Run all unit tests
-helm unittest tests/unit/
+# Run all tests
+python tests/run-tests.py
 
-# Run all integration tests
-helm unittest tests/integration/
-
-# Run all tests with coverage report
-helm unittest --output-type XUnit --output-file test-report.xml .
+# Generate test report
+python tests/generate-report.py
 ```
 
-### End-to-End Tests
-```bash
-# Install the chart
-helm install test-release . --namespace test-namespace --create-namespace
+### CI Integration
+The tests are automatically run in the GitHub Actions workflow:
+1. **Helm lint** - Validates chart syntax
+2. **Schema validation** - Validates Kubernetes resources with kubeconform
+3. **Comprehensive testing** - Runs all validation tests
+4. **Report generation** - Creates XUnit format reports
+5. **Artifact upload** - Saves test results
 
-# Run the tests
-helm test test-release
+## Test Results
 
-# Clean up
-helm uninstall test-release
+### Output Files
+- **`test-results.json`**: Detailed test results in JSON format
+- **`test-report.xml`**: XUnit format report for CI integration
+
+### Sample Output
 ```
+🚀 Starting Helm Chart Testing...
+==================================================
+🧪 Testing chart rendering...
+✅ PASS Chart Rendering: Chart renders successfully
+🧪 Testing custom values rendering...
+✅ PASS Custom Values Rendering: Custom values render successfully
+🧪 Testing required resources...
+✅ PASS Required Resources: All required resources found
+...
 
-### Manual Testing
-```bash
-# Test chart rendering
-helm template test-release . > rendered.yaml
-
-# Validate with kubeconform
-helm template test-release . | kubeconform -strict
-
-# Test with different values
-helm template test-release . -f values.yaml -f test-values.yaml
+📋 TEST SUMMARY
+==================================================
+Total tests: 10
+Passed: 10
+Failed: 0
+🎉 All tests passed!
 ```
-
-## Test Values
-
-Create `test-values.yaml` for testing with different configurations:
-
-```yaml
-namespace: test-namespace
-hostname: test.example.com
-image:
-  registry: test.registry.com
-  tag: test-tag
-opensearch:
-  replicaCount: 2
-  storageSize: 20Gi
-secret:
-  opensearchPassword: TestPassword123!
-  openaiApiKey: sk-test-key
-```
-
-## Continuous Integration
-
-The tests are integrated into the CI pipeline in `.github/workflows/chart-ci.yml`:
-
-1. **Lint**: Helm strict linting
-2. **Schema Validation**: kubeconform validation
-3. **Unit Tests**: helm-unittest execution
-4. **Integration Tests**: Full chart rendering tests
-
-## Test Coverage
-
-The test suite covers:
-
-- ✅ Template rendering with default values
-- ✅ Template rendering with custom values
-- ✅ Resource naming and namespacing
-- ✅ Service selectors and port configurations
-- ✅ Deployment configurations
-- ✅ OpenSearch StatefulSet and PVC
-- ✅ Ingress and middleware configurations
-- ✅ Secrets and ConfigMap structure
-- ✅ Component connectivity
-- ✅ OpenSearch functionality
 
 ## Adding New Tests
 
-1. Create test file in appropriate directory (`tests/unit/` or `tests/integration/`)
-2. Follow the helm-unittest format
-3. Add test to CI pipeline if needed
-4. Update this README with new test information 
+To add new tests to the framework:
+
+1. **Add test method** to `HelmChartTester` class in `run-tests.py`:
+```python
+def test_new_functionality(self) -> TestResult:
+    """Test new functionality"""
+    print("🧪 Testing new functionality...")
+    # Your test logic here
+    if condition:
+        return TestResult("New Functionality", True, "Test passed")
+    else:
+        return TestResult("New Functionality", False, "Test failed")
+```
+
+2. **Register the test** in the `run_all_tests()` method:
+```python
+tests = [
+    # ... existing tests ...
+    self.test_new_functionality
+]
+```
+
+## Benefits
+
+### ✅ Reliability
+- No external plugin dependencies
+- Consistent behavior across environments
+- Clear error messages and debugging
+
+### ✅ Comprehensiveness
+- Tests all critical chart functionality
+- Validates both default and custom configurations
+- Checks resource relationships and dependencies
+
+### ✅ Maintainability
+- Simple Python codebase
+- Easy to extend and modify
+- Clear test structure and organization
+
+### ✅ CI Integration
+- Generates standard XUnit reports
+- Provides detailed test results
+- Integrates seamlessly with GitHub Actions
+
+## Troubleshooting
+
+### Common Issues
+
+**Test fails with "Chart rendering failed"**
+- Check that Helm is installed and working
+- Verify Chart.yaml and values.yaml are valid
+- Ensure all template files are properly formatted
+
+**Missing resources in tests**
+- Update the `required_resources` list in `test_required_resources()`
+- Add new resource patterns to match your chart structure
+
+**Custom values not working**
+- Verify `tests/test-values.yaml` contains valid YAML
+- Check that custom values are being applied correctly in templates
+
+### Debugging
+- Tests provide detailed output for each step
+- Check `test-results.json` for detailed failure information
+- Review rendered YAML output for template issues 
