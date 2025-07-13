@@ -103,56 +103,28 @@ xdg-open http://rag.local:8080/
 
 ## Health Checks & Verification
 
-After deploying the chart, use these steps to verify your deployment is healthy:
+After installing or upgrading the chart, Helm will display a dynamic post-install message with health check, access, and troubleshooting instructions. This message is generated from [`templates/NOTES.txt`](./templates/NOTES.txt) and is tailored to your configuration (hostnames, ports, credentials, etc.).
 
-### 1. Check Pod and Service Status
+**What NOTES.txt provides:**
+- Access URLs for the UI and API, based on your configured hostname and ports
+- Example `kubectl` commands for checking pod/service status and logs
+- Port-forwarding instructions for local access
+- Health check and troubleshooting tips
+- Reminders about secrets, DNS, and next steps
 
-```bash
-kubectl get pods -n haystack-rag
-kubectl get svc -n haystack-rag
-kubectl get ingressroute -n haystack-rag
-```
-
-All pods should be in the `Running` or `Completed` state. Services and ingress routes should be listed.
-
-### 2. Verify OpenSearch
-
-Check OpenSearch readiness:
+To see these instructions at any time, run:
 
 ```bash
-kubectl port-forward svc/opensearch 9200:9200 -n haystack-rag &
-curl -u admin:<your-opensearchPassword> http://localhost:9200/
+helm status <release-name> -n <namespace>
 ```
 
-You should see OpenSearch version info in the response.
-
-### 3. Access the UI
-
-Open your browser to [http://rag.local:8080/](http://rag.local:8080/) (or your configured hostname/port). The Haystack RAG UI should load.
-
-### 4. Check Logs
-
-If something isn’t working, inspect logs:
-
-```bash
-kubectl logs deployment/rag-query -n haystack-rag
-kubectl logs deployment/rag-indexing -n haystack-rag
-kubectl logs deployment/rag-frontend -n haystack-rag
-kubectl logs statefulset/opensearch -n haystack-rag
-```
-
-### 5. Troubleshooting
-
-- Ensure all pods are running: `kubectl get pods -n haystack-rag`
-- Check for CrashLoopBackOff or errors in logs
-- Verify secrets and configmaps are mounted:  
-  `kubectl describe pod <pod-name> -n haystack-rag`
-- Confirm ingress or port-forwarding is set up correctly
+For more details, see the [NOTES.txt template](./templates/NOTES.txt).
 
 ---
 
 ## Values reference (excerpt)
 
+<<<<<<< Updated upstream
 | Key | Default | Description |
 |-----|---------|-------------|
 | `hostname`              | `rag.local` | Ingress host header |
@@ -161,6 +133,18 @@ kubectl logs statefulset/opensearch -n haystack-rag
 | `secret.*`              | *empty*     | OpenSearch admin pwd & OpenAI key |
 | `opensearch.storageSize`| `10Gi`      | PVC size |
 | `resources.*`           | `{}`        | add CPU/RAM requests/limits |
+=======
+The chart is fully parameterized and all major settings are grouped by component. See [`values.yaml`](./values.yaml) for all available options and defaults.
+
+**Key variables:**
+- `replicaCount`: Number of pod replicas for each component
+- `port`: Service and container port for each component
+- `resources`: CPU/memory requests and limits
+- `env`: Environment variables (e.g., log level, API URL)
+- `livenessProbe`/`readinessProbe`: Health check paths and timings
+- `service.type`: Kubernetes service type (ClusterIP, NodePort, etc.)
+- `ingress.buffering`/`ingress.timeouts`: Traefik middleware settings
+>>>>>>> Stashed changes
 
 ---
 
