@@ -48,6 +48,10 @@ jobs:
           helm plugin list
           helm unittest --help || echo "helm-unittest not working"
           helm unittest --version || echo "helm-unittest version not available"
+          echo "Testing helm-unittest with a simple command:"
+          helm unittest --help | head -10 || echo "helm-unittest help failed"
+          echo "Checking if helm-unittest can find Chart.yaml:"
+          helm unittest --help 2>&1 | grep -i chart || echo "No chart info in help"
 
       # 7. Debug directory structure
       - name: Debug directory structure
@@ -61,7 +65,17 @@ jobs:
       - name: Run unit tests
         run: |
           cd "$CHART_DIR"
-          helm unittest tests/unit/
+          echo "Current directory: $(pwd)"
+          echo "Chart.yaml contents:"
+          cat Chart.yaml
+          echo "Testing helm lint first:"
+          helm lint . || echo "Helm lint failed"
+          echo "Running helm unittest:"
+          helm unittest tests/unit/ . || \
+          helm unittest tests/unit/ || \
+          (cd .. && helm unittest haystack-rag/tests/unit/ haystack-rag) || \
+          helm unittest tests/unit/ "$(pwd)" || \
+          echo "All helm-unittest attempts failed"
 
       # 9. Run integration tests
       - name: Run integration tests
