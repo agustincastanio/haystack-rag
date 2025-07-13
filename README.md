@@ -10,39 +10,39 @@ A Helm chart for deploying the Haystack Retrieval-Augmented Generation (RAG) sta
 
 ```
 haystack-rag/
-  Chart.yaml           # Helm chart metadata
-  IMAGES.md            # Image build instructions
-  README.md            # Project documentation
-  values.yaml          # Default configuration values
-  
-  templates/           # Helm templates
-    _helpers.tpl         # Template helpers
-    configmap.yaml       # ConfigMap for app config
-    deployment-frontend.yaml  # Frontend Deployment
-    deployment-indexing.yaml  # Indexing Deployment
-    deployment-query.yaml     # Query Deployment
-    ingressroute.yaml         # IngressRoute definition
-    middleware-strip.yaml     # Traefik middleware (strip)
-    middleware.yaml           # Traefik middleware
-    namespace.yaml            # Namespace manifest
-    NOTES.txt                 # Post-install instructions
-    pvc-opensearch.yaml       # OpenSearch PVC
-    secret.yaml               # Secrets manifest
-    service.yaml              # Service definitions
-    statefulset-opensearch.yaml # OpenSearch StatefulSet
-    tests/                    # Helm test templates
-      test-connection.yaml      # Connection test
-      test-opensearch.yaml      # OpenSearch test
-    transport.yaml             # Transport manifest
-
-  tests/                 # Test suite (not Helm tests)
-    generate-report.py     # Test report generator
-    integration/           # Integration tests
-      test-chart-integration.yaml
-    README.md              # Test documentation
-    run-tests.py           # Test runner
-    test-values.yaml       # Test values
-    unit/                  # Unit tests (YAML test cases)
+├── Chart.yaml                 # Helm chart metadata
+├── IMAGES.md                  # Image build instructions
+├── README.md                  # Project documentation
+├── values.yaml                # Default configuration values
+│
+├── templates/                 # Helm templates
+│   ├── _helpers.tpl               # Template helpers
+│   ├── configmap.yaml              # ConfigMap for app config
+│   ├── deployment-frontend.yaml    # Frontend Deployment
+│   ├── deployment-indexing.yaml    # Indexing Deployment
+│   ├── deployment-query.yaml       # Query Deployment
+│   ├── ingressroute.yaml           # IngressRoute definition
+│   ├── middleware-strip.yaml       # Traefik middleware (strip)
+│   ├── middleware.yaml             # Traefik middleware
+│   ├── namespace.yaml              # Namespace manifest
+│   ├── NOTES.txt                   # Post-install instructions
+│   ├── pvc-opensearch.yaml         # OpenSearch PVC
+│   ├── secret.yaml                 # Secrets manifest
+│   ├── service.yaml                # Service definitions
+│   ├── statefulset-opensearch.yaml # OpenSearch StatefulSet
+│   ├── tests/                      # Helm test templates
+│   │   ├── test-connection.yaml        # Connection test
+│   │   └── test-opensearch.yaml        # OpenSearch test
+│   └── transport.yaml               # Transport manifest
+│
+├── tests/                     # Test suite (not Helm tests)
+│   ├── generate-report.py         # Test report generator
+│   ├── integration/               # Integration tests
+│   │   └── test-chart-integration.yaml
+│   ├── README.md                  # Test documentation
+│   ├── run-tests.py               # Test runner
+│   ├── test-values.yaml           # Test values
+│   └── unit/                      # Unit tests (YAML test cases)
 ```
 
 ---
