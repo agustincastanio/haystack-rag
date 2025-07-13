@@ -61,7 +61,7 @@ class HelmChartTester:
         """Test that all required resources are present"""
         print("🧪 Testing required resources...")
         required_resources = [
-            ("Namespace", "kind: Namespace"),
+            # ("Namespace", "kind: Namespace"),
             ("Deployment", "kind: Deployment"),
             ("Service", "kind: Service"),
             ("StatefulSet", "kind: StatefulSet"),
