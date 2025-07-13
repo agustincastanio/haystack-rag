@@ -4,6 +4,47 @@ A Helm chart for deploying the Haystack Retrieval-Augmented Generation (RAG) sta
 
 ---
 
+## Project Structure
+
+```
+haystack-rag/
+  Chart.yaml           # Helm chart metadata
+  IMAGES.md            # Image build instructions
+  README.md            # Project documentation
+  values.yaml          # Default configuration values
+  
+  templates/           # Helm templates
+    _helpers.tpl         # Template helpers
+    configmap.yaml       # ConfigMap for app config
+    deployment-frontend.yaml  # Frontend Deployment
+    deployment-indexing.yaml  # Indexing Deployment
+    deployment-query.yaml     # Query Deployment
+    ingressroute.yaml         # IngressRoute definition
+    middleware-strip.yaml     # Traefik middleware (strip)
+    middleware.yaml           # Traefik middleware
+    namespace.yaml            # Namespace manifest
+    NOTES.txt                 # Post-install instructions
+    pvc-opensearch.yaml       # OpenSearch PVC
+    secret.yaml               # Secrets manifest
+    service.yaml              # Service definitions
+    statefulset-opensearch.yaml # OpenSearch StatefulSet
+    tests/                    # Helm test templates
+      test-connection.yaml      # Connection test
+      test-opensearch.yaml      # OpenSearch test
+    transport.yaml             # Transport manifest
+
+  tests/                 # Test suite (not Helm tests)
+    generate-report.py     # Test report generator
+    integration/           # Integration tests
+      test-chart-integration.yaml
+    README.md              # Test documentation
+    run-tests.py           # Test runner
+    test-values.yaml       # Test values
+    unit/                  # Unit tests (YAML test cases)
+```
+
+---
+
 ## Testing
 
 The test suite validates:
@@ -70,18 +111,18 @@ xdg-open http://rag.local:8080/
 
 After installing or upgrading the chart, Helm will display a dynamic post-install message with health check, access, and troubleshooting instructions. This message is generated from [`templates/NOTES.txt`](./templates/NOTES.txt) and is tailored to your configuration (hostnames, ports, credentials, etc.).
 
+> **Important:** For further instructions and troubleshooting tips after installing the chart, **always check the output from Helm and review [`templates/NOTES.txt`](./templates/NOTES.txt)**. You can re-display these instructions at any time with:
+>
+> ```bash
+> helm status <release-name> -n <namespace>
+> ```
+
 **What NOTES.txt provides:**
 - Access URLs for the UI and API, based on your configured hostname and ports
 - Example `kubectl` commands for checking pod/service status and logs
 - Port-forwarding instructions for local access
 - Health check and troubleshooting tips
 - Reminders about secrets, DNS, and next steps
-
-To see these instructions at any time, run:
-
-```bash
-helm status <release-name> -n <namespace>
-```
 
 For more details, see the [NOTES.txt template](./templates/NOTES.txt).
 
@@ -97,7 +138,7 @@ The chart is fully parameterized and all major settings are grouped by component
 - `frontend.*`, `query.*`, `indexing.*`, `opensearch.*`: Per-component settings (replicaCount, port, resources, env, probes, service type, etc.)
 - `ingress.*`: Ingress and Traefik middleware settings
 
-See [`values.yaml`](./values.yaml) for all available options and documentation.
+👉 **See [`values.yaml`](./values.yaml) for all available options and documentation.**
 
 ---
 
