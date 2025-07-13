@@ -128,6 +128,22 @@ For more details, see the [NOTES.txt template](./templates/NOTES.txt).
 
 ---
 
+## Helm Chart Tests
+
+After installing or upgrading the chart, you can verify the deployment using the included Helm test hooks. These tests check the health and basic functionality of key components (such as OpenSearch).
+
+To run the Helm tests, use:
+
+```bash
+helm test <release-name> -n <namespace>
+```
+
+This will execute the test pods defined in [`templates/tests/`](./templates/tests/), such as OpenSearch connectivity and index operations. Review the test output for any failures or issues.
+
+For more details on what these tests do, see the [`templates/tests/`](./templates/tests/) directory.
+
+---
+
 ## Values reference
 
 The chart is fully parameterized and all major settings are grouped by component. Below is a summary of the most important values. For the full list and defaults, see [`values.yaml`](./values.yaml):
