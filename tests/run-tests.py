@@ -164,8 +164,8 @@ class HelmChartTester:
         port_configs = [
             ("opensearch", "9200"),
             ("rag-frontend", "80"),
-            ("rag-query", "8000"),
-            ("rag-indexing", "8000")
+            ("rag-query", "8002"),
+            ("rag-indexing", "8001")
         ]
         
         missing_ports = []
@@ -184,7 +184,7 @@ class HelmChartTester:
         env_vars = [
             "REACT_APP_HAYSTACK_API_URL",
             "OPENSEARCH_HOST",
-            "OPENSEARCH_PORT"
+            "OPENSEARCH_USER"
         ]
         
         missing_env_vars = []

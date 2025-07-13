@@ -30,7 +30,7 @@ The framework tests:
 #### ✅ Configuration Validation
 - Namespace consistency across all resources
 - Custom namespace application
-- Service selectors and port configurations
+- Service selectors and port configurations (OpenSearch: 9200, Frontend: 80, Query: 8002, Indexing: 8001)
 - Image references and versions
 - Environment variable configuration
 
